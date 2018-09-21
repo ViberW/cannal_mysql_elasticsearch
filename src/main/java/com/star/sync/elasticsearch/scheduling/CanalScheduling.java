@@ -5,6 +5,9 @@ import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
+import com.dadaabc.sync.elasticsearch.event.DadaDeleteCanalEvent;
+import com.dadaabc.sync.elasticsearch.event.DadaInsertCanalEvent;
+import com.dadaabc.sync.elasticsearch.event.DadaUpdateCanalEvent;
 import com.star.sync.elasticsearch.event.DeleteCanalEvent;
 import com.star.sync.elasticsearch.event.InsertCanalEvent;
 import com.star.sync.elasticsearch.event.UpdateCanalEvent;
@@ -63,7 +66,7 @@ public class CanalScheduling implements Runnable, ApplicationContextAware {
     private void publishCanalEvent(Entry entry) {
         EventType eventType = entry.getHeader().getEventType();
         switch (eventType) {
-            case INSERT:
+            /*case INSERT:
                 applicationContext.publishEvent(new InsertCanalEvent(entry));
                 break;
             case UPDATE:
@@ -71,6 +74,15 @@ public class CanalScheduling implements Runnable, ApplicationContextAware {
                 break;
             case DELETE:
                 applicationContext.publishEvent(new DeleteCanalEvent(entry));
+                break;*/
+            case INSERT:
+                applicationContext.publishEvent(new DadaInsertCanalEvent(entry));
+                break;
+            case UPDATE:
+                applicationContext.publishEvent(new DadaUpdateCanalEvent(entry));
+                break;
+            case DELETE:
+                applicationContext.publishEvent(new DadaDeleteCanalEvent(entry));
                 break;
             default:
                 break;

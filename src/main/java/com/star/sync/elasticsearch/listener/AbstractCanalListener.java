@@ -50,7 +50,7 @@ public abstract class AbstractCanalListener<EVENT extends CanalEvent> implements
         change.getRowDatasList().forEach(rowData -> doSync(database, table, index, type, rowData));
     }
 
-    Map<String, Object> parseColumnsToMap(List<Column> columns) {
+    public Map<String, Object> parseColumnsToMap(List<Column> columns) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {

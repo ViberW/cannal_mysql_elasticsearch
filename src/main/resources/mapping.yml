@@ -1,0 +1,20 @@
+dada:
+  db-es:
+    mappings:
+      - index: call-center
+        type: type
+        dbs:
+          - database: call-center
+            table: call_task
+            include:
+            exclude:
+            pkstr: id
+            main: true
+            convert: {create_time: createTime,update_time: updateTime}
+          - database: call-center
+            table: call_task_sheet
+            include:
+            exclude:
+            pkstr: "student_id"
+            main: false
+            convert: {create_time: createTime,update_time: updateTime}

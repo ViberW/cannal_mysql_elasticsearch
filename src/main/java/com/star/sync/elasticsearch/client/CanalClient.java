@@ -33,7 +33,7 @@ public class CanalClient implements DisposableBean {
     @Value("${canal.password}")
     private String canalPassword;
 
-    //@Bean
+    @Bean
     public CanalConnector getCanalConnector() {
         canalConnector = CanalConnectors.newClusterConnector(Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))), canalDestination, canalUsername, canalPassword);
         canalConnector.connect();

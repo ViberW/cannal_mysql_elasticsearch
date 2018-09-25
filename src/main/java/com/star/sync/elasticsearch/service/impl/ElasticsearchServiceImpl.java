@@ -21,7 +21,7 @@ import java.util.Map;
 public class ElasticsearchServiceImpl implements ElasticsearchService {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchServiceImpl.class);
 
-    //@Resource
+    @Resource
     private TransportClient transportClient;
 
     @Override

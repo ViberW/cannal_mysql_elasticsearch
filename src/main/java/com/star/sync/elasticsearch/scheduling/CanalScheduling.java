@@ -32,10 +32,10 @@ public class CanalScheduling implements Runnable, ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(CanalScheduling.class);
     private ApplicationContext applicationContext;
 
-    //@Resource
+    @Resource
     private CanalConnector canalConnector;
 
-    //@Scheduled(fixedDelay = 100)
+    @Scheduled(fixedDelay = 100)
     @Override
     public void run() {
         try {

@@ -1,20 +1,20 @@
 dada:
   db-es:
     mappings:
-      - index: call-center
-        type: type
+      - index: info
+        type: infos
         dbs:
-          - database: call-center
-            table: call_task
-            include:
+          - database: infos
+            table: info_name
+            include: id,name
             exclude:
-            pkstr: id
+            pkstr: 'id'
             main: true
-            convert: {create_time: createTime,update_time: updateTime}
-          - database: call-center
-            table: call_task_sheet
+            convert: {name: names}
+          - database: infos
+            table: info_phone
             include:
-            exclude:
-            pkstr: "student_id"
+            exclude: 'id'
+            pkstr: "id"
             main: false
-            convert: {create_time: createTime,update_time: updateTime}
+            convert: {phone: phones}

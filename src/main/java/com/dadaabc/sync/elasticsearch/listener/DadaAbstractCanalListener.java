@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -60,21 +61,22 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
                 return;
             }
             String esField = convertColumnAndEsName(column.getName(), dbModel);
-            if (StringUtils.isEmpty(esField)) {
+            if (StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue()));
             }
         });
         return jsonMap;
     }
 
-    protected Map<String, Object> parseColumnsToNullMap(DataDatabaseTableModel dbModel, List<CanalEntry.Column> columns) {
+    protected Map<String, Object> parseColumnsToNullMap(DataDatabaseTableModel dbModel,
+                                                        List<CanalEntry.Column> columns, String primaryKey) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {
                 return;
             }
             String esField = convertColumnAndEsName(column.getName(), dbModel);
-            if (StringUtils.isEmpty(esField)) {
+            if (!primaryKey.equals(column.getName()) && StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, null);
             }
         });
@@ -85,13 +87,12 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
         if (StringUtils.isEmpty(columnName)) {
             return null;
         }
-        if (!dbModel.getConvertAll()) {
-            List<String> includeField = dbModel.getIncludeField();
-            if (null != includeField && includeField.contains(columnName.trim())) {
-                //转换字段
-                return convertEsColumn(columnName.trim(), dbModel);
-            }
-        } else {
+        List<String> includeField = dbModel.getIncludeField();
+        if (null != includeField && includeField.contains(columnName.trim())) {
+            //转换字段
+            return convertEsColumn(columnName.trim(), dbModel);
+        }
+        if (null == includeField || includeField.isEmpty()) {
             List<String> excludeField = dbModel.getExcludeField();
             if (null == excludeField || !excludeField.contains(columnName.trim())) {
                 //转换字段

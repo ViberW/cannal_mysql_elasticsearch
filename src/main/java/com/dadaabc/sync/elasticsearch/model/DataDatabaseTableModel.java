@@ -16,8 +16,6 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
 
     private String pkStr;
 
-    private Boolean convertAll;
-
     private List<String> includeField;
 
     private List<String> excludeField;
@@ -45,14 +43,6 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
 
     public void setPkStr(String pkStr) {
         this.pkStr = pkStr;
-    }
-
-    public Boolean getConvertAll() {
-        return convertAll;
-    }
-
-    public void setConvertAll(Boolean convertAll) {
-        this.convertAll = convertAll;
     }
 
     public List<String> getIncludeField() {

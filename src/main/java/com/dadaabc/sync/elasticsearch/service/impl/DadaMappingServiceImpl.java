@@ -59,13 +59,17 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
         DadaIndexTypeModel dadaIndexTypeModel;
         List<DataDatabaseTableModel> models;
         DataDatabaseTableModel tableModel;
+        DadaConnectModel dadaConnectModel;
         String include;
         String exclude;
         String[] split;
+        dbSingleMapping = HashBiMap.create();
         for (DadaConvertModel model : mappings) {
-            dadaDatabaseModel = new DadaDatabaseModel();
             dadaIndexTypeModel = new DadaIndexTypeModel();
+            dadaIndexTypeModel.setIndex(model.getIndex());
+            dadaIndexTypeModel.setType(model.getType());
             //获取数据库
+            dadaDatabaseModel = new DadaDatabaseModel();
             List<DadaDbConvertModel> dbs = model.getDbs();
             models = new ArrayList<>();
             for (DadaDbConvertModel dbConvertModel : dbs) {
@@ -75,25 +79,22 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                 tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : false);
                 tableModel.setPkStr(StringUtils.isNotEmpty(dbConvertModel.getPkstr()) ? BaseConstants.DEFAULT_ID : dbConvertModel.getPkstr());
                 include = dbConvertModel.getInclude();
-                boolean convertAll = true;
                 if (StringUtils.isNotEmpty(include)) {
                     split = include.split(BaseConstants.DEFAULT_SPLIT);
                     tableModel.setIncludeField(Arrays.asList(split));
-                    convertAll = false;
                 }
                 exclude = dbConvertModel.getExclude();
                 if (StringUtils.isNotEmpty(exclude)) {
                     split = exclude.split(BaseConstants.DEFAULT_SPLIT);
                     tableModel.setExcludeField(Arrays.asList(split));
-                    convertAll = false;
                 }
-                tableModel.setConvertAll(convertAll);
                 models.add(tableModel);
+                dadaConnectModel = new DadaConnectModel();
+                dadaConnectModel.setDbModel(tableModel);
+                dadaConnectModel.setEsModel(dadaIndexTypeModel);
+                dbSingleMapping.put(tableModel, dadaConnectModel);
             }
             dadaDatabaseModel.setModels(models);
-
-            dadaIndexTypeModel.setIndex(model.getIndex());
-            dadaIndexTypeModel.setType(model.getType());
             dbEsBiMapping.put(dadaDatabaseModel, dadaIndexTypeModel);
         }
         mysqlTypeElasticsearchTypeMapping = Maps.newHashMap();

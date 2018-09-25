@@ -40,6 +40,7 @@ public class DadaUpdateCanalListener extends DadaAbstractCanalListener<DadaUpdat
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
+        logger.info("column信息:"+columns.toString());
         logger.info("update_column_id_info update主键id,database=" + dbModel.getTable()
                 + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);

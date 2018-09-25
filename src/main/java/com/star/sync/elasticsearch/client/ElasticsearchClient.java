@@ -2,7 +2,7 @@ package com.star.sync.elasticsearch.client;
 
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +30,13 @@ public class ElasticsearchClient implements DisposableBean {
     @Value("${elasticsearch.port}")
     private String port;
 
-    //@Bean
+    @Bean
     public TransportClient getTransportClient() throws Exception {
-        Settings settings = Settings.builder().put("cluster.name", clusterName)
+        /*Settings settings = Settings.builder().put("cluster.name", clusterName)
                 .put("client.transport.sniff", true)
-                .build();
-        transportClient = new PreBuiltTransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
+                .build();*/
+        transportClient = new PreBuiltTransportClient(Settings.EMPTY)
+                .addTransportAddress(new TransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
         logger.info("elasticsearch transportClient 连接成功");
         return transportClient;
     }

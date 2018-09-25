@@ -47,7 +47,7 @@ public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDelet
             elasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
         } else {
             //删除es中的部分字段信息,置为null
-            Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns);
+            Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns, primaryKey);
             elasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }
         logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()

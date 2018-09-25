@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 public class ElasticsearchServiceImplTest {
 
-    //@Resource
+    @Resource
     private TransportClient transportClient;
 
     @Test

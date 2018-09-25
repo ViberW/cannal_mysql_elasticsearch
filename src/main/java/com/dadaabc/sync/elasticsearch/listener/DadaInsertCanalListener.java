@@ -46,14 +46,7 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
                 + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         //构建元数据map
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
-        //此处需要是否需要自己创建  第一版本暂且不创建
-        Boolean main = dbModel.getMain();
-        if (null != main && main) {
-            elasticsearchService.insertById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
-        } else {
-            //向es中填充字段,根据pkstr,此种情况需要创建好index
-            elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
-        }
+        elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
                 + ",table=" + dbModel.getTable() + ",data=" + JsonUtil.toJson(dataMap));
     }

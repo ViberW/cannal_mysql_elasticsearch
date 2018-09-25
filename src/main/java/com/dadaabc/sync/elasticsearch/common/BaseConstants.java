@@ -7,6 +7,8 @@ package com.dadaabc.sync.elasticsearch.common;
  */
 public class BaseConstants {
 
+    public static final String USUAL_SIGN = "*";
+
     public static final String SCHEMA = "schema";
     public static final String TABLE = "table";
 

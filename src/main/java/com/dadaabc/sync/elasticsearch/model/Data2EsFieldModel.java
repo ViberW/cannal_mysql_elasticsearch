@@ -7,6 +7,7 @@ package com.dadaabc.sync.elasticsearch.model;
  */
 public class Data2EsFieldModel {
 
+
     private String dbField;
 
     private String esField;

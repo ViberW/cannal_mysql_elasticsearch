@@ -2,6 +2,9 @@ package com.dadaabc.sync.elasticsearch.model;
 
 import com.star.sync.elasticsearch.model.DatabaseTableModel;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author: veelur
  * @date: 18-9-21
@@ -9,43 +12,70 @@ import com.star.sync.elasticsearch.model.DatabaseTableModel;
  */
 public class DataDatabaseTableModel extends DatabaseTableModel {
 
-    private String field = "*";
+    private Boolean main;
 
-    private String includeField;
+    private String pkStr;
 
-    private String excludeField;
+    private Boolean convertAll;
 
-    private Data2EsFieldModel fields;
+    private List<String> includeField;
 
-    public Data2EsFieldModel getFields() {
-        return fields;
+    private List<String> excludeField;
+
+    private Map<String, Data2EsFieldModel> fields;
+
+    public DataDatabaseTableModel(String database, String table) {
+        super(database, table);
     }
 
-    public void setFields(Data2EsFieldModel fields) {
-        this.fields = fields;
+    public DataDatabaseTableModel() {
     }
 
-    public String getField() {
-        return field;
+    public Boolean getMain() {
+        return main;
     }
 
-    public void setField(String field) {
-        this.field = field;
+    public void setMain(Boolean main) {
+        this.main = main;
     }
 
-    public String getIncludeField() {
+    public String getPkStr() {
+        return pkStr;
+    }
+
+    public void setPkStr(String pkStr) {
+        this.pkStr = pkStr;
+    }
+
+    public Boolean getConvertAll() {
+        return convertAll;
+    }
+
+    public void setConvertAll(Boolean convertAll) {
+        this.convertAll = convertAll;
+    }
+
+    public List<String> getIncludeField() {
         return includeField;
     }
 
-    public void setIncludeField(String includeField) {
+    public void setIncludeField(List<String> includeField) {
         this.includeField = includeField;
     }
 
-    public String getExcludeField() {
+    public List<String> getExcludeField() {
         return excludeField;
     }
 
-    public void setExcludeField(String excludeField) {
+    public void setExcludeField(List<String> excludeField) {
         this.excludeField = excludeField;
+    }
+
+    public Map<String, Data2EsFieldModel> getFields() {
+        return fields;
+    }
+
+    public void setFields(Map<String, Data2EsFieldModel> fields) {
+        this.fields = fields;
     }
 }

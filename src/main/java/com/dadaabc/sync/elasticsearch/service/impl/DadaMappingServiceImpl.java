@@ -1,11 +1,11 @@
 package com.dadaabc.sync.elasticsearch.service.impl;
 
 import com.dadaabc.sync.elasticsearch.common.BaseConstants;
+import com.dadaabc.sync.elasticsearch.model.DadaConnectModel;
 import com.dadaabc.sync.elasticsearch.model.DadaDatabaseModel;
-import com.dadaabc.sync.elasticsearch.model.DadaEsModel;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
 import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
-import com.dadaabc.sync.elasticsearch.service.DadaMppingService;
+import com.dadaabc.sync.elasticsearch.service.DadaMappingService;
 import com.dadaabc.sync.elasticsearch.util.ClazzConverterUtils;
 import com.dadaabc.sync.elasticsearch.util.DateUtils;
 import com.google.common.collect.BiMap;
@@ -18,10 +18,10 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author: veelur
@@ -31,42 +31,49 @@ import java.util.Map;
 @Service
 @PropertySource("classpath:mapping-dada.yml")
 @ConfigurationProperties("dada.db-es")
-public class DadaMppingServiceImpl implements DadaMppingService, InitializingBean {
+public class DadaMappingServiceImpl implements DadaMappingService, InitializingBean {
 
     @Value("${mappings}")
     private List<Map<String, String>> dbEsMapping;
-    private BiMap<DadaDatabaseModel, DadaEsModel> dbEsBiMapping;
-    private Map<String, DadaMppingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
+    private BiMap<DadaDatabaseModel, DadaIndexTypeModel> dbEsBiMapping;
+    private Map<String, DadaMappingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
+    private BiMap<DataDatabaseTableModel, DadaConnectModel> dbSingleMapping;
+
+    public DadaConnectModel getColumnWithData(String database, String table) {
+        return dbSingleMapping.get(new DataDatabaseTableModel(database, table));
+    }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public Object getElasticsearchTypeObject(String mysqlType, String data) {
+        Optional<Map.Entry<String, DadaMappingServiceImpl.Converter>> result = mysqlTypeElasticsearchTypeMapping.entrySet()
+                .parallelStream().filter(entry -> mysqlType.toLowerCase().contains(entry.getKey())).findFirst();
+        return (result.isPresent() ? result.get().getValue() : (DadaMappingServiceImpl.Converter) data1 -> data1).convert(data);
+    }
+
+    @PostConstruct
+    public void afterPropertiesSet() {
         dbEsBiMapping = HashBiMap.create();
         if (CollectionUtils.isEmpty(dbEsMapping)) {
             // TODO: 18-9-21 停止
         }
         DadaDatabaseModel dadaDatabaseModel;
-        DadaEsModel dadaEsModel;
         DadaIndexTypeModel dadaIndexTypeModel;
-        List<DadaIndexTypeModel> dadaIndexTypeModels;
         for (Map<String, String> map : dbEsMapping) {
             dadaDatabaseModel = new DadaDatabaseModel();
-            dadaEsModel = new DadaEsModel();
             dadaIndexTypeModel = new DadaIndexTypeModel();
-            dadaIndexTypeModels = new ArrayList<>();
             //获取数据库
             String database = map.getOrDefault(BaseConstants.SCHEMA, "");
             dadaDatabaseModel.setDatabase(database);
             String tableStr = map.getOrDefault(BaseConstants.TABLE, "");
-            List<DataDatabaseTableModel> models = (List<DataDatabaseTableModel>) ClazzConverterUtils.converterClassArray(tableStr, DataDatabaseTableModel.class);
+            List<DataDatabaseTableModel> models = (List<DataDatabaseTableModel>) ClazzConverterUtils
+                    .converterClassArray(tableStr, DataDatabaseTableModel.class);
             dadaDatabaseModel.setModels(models);
 
             String index = map.getOrDefault(BaseConstants.INDEX, "");
             dadaIndexTypeModel.setIndex(index);
             String type = map.getOrDefault(BaseConstants.TYPE, "");
             dadaIndexTypeModel.setType(type);
-            dadaIndexTypeModels.add(dadaIndexTypeModel);
-            dadaEsModel.setModels(dadaIndexTypeModels);
-            dbEsBiMapping.put(dadaDatabaseModel, dadaEsModel);
+            dbEsBiMapping.put(dadaDatabaseModel, dadaIndexTypeModel);
         }
 
         mysqlTypeElasticsearchTypeMapping = Maps.newHashMap();

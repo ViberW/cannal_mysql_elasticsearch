@@ -52,7 +52,7 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
             elasticsearchService.insertById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         } else {
             //向es中填充字段,根据pkstr,此种情况需要创建好index
-            elasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+            elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }
         logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
                 + ",table=" + dbModel.getTable() + ",data=" + JsonUtil.toJson(dataMap));

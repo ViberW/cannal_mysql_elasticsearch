@@ -26,7 +26,7 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
 
     private static final Logger logger = LoggerFactory.getLogger(DadaElasticsearchServiceImpl.class);
 
-    @Autowired
+    //@Autowired
     private TransportClient transportClient;
 
     /****************************************dada自定义方法****************************************/

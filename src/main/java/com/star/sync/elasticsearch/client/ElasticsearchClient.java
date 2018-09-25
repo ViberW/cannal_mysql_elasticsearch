@@ -30,7 +30,7 @@ public class ElasticsearchClient implements DisposableBean {
     @Value("${elasticsearch.port}")
     private String port;
 
-    @Bean
+    //@Bean
     public TransportClient getTransportClient() throws Exception {
         Settings settings = Settings.builder().put("cluster.name", clusterName)
                 .put("client.transport.sniff", true)

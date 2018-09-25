@@ -9,17 +9,7 @@ import java.util.List;
  */
 public class DadaDatabaseModel {
 
-    private String database;
-
     List<DataDatabaseTableModel> models;
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public void setDatabase(String database) {
-        this.database = database;
-    }
 
     public List<DataDatabaseTableModel> getModels() {
         return models;

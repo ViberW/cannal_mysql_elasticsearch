@@ -1,6 +1,7 @@
 package com.dadaabc.sync.elasticsearch.service;
 
 import com.dadaabc.sync.elasticsearch.model.DadaConnectModel;
+import com.dadaabc.sync.elasticsearch.model.DadaDatabaseModel;
 
 /**
  * @author: veelur
@@ -19,4 +20,6 @@ public interface DadaMappingService {
     Object getElasticsearchTypeObject(String mysqlType, String data);
 
     DadaConnectModel getColumnWithData(String database, String table);
+
+    DadaDatabaseModel getDatabaseWithIndexType(String index, String type);
 }

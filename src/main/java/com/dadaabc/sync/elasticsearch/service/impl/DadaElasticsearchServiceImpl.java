@@ -1,18 +1,28 @@
 package com.dadaabc.sync.elasticsearch.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.dadaabc.sync.elasticsearch.service.DadaElasticsearchService;
 import com.star.sync.elasticsearch.util.JsonUtil;
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.UpdateByQueryAction;
+import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -35,9 +45,11 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
         try {
             UpdateRequest updateRequest = new UpdateRequest(index, type, id);
             updateRequest.doc(dataMap);
-            UpdateResponse updateResponse = transportClient.update(updateRequest).get();
+            transportClient.update(updateRequest).get();
         } catch (InterruptedException e) {
+            logger.error("更新数据异常", e);
         } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
         }
     }
 
@@ -48,9 +60,64 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
             indexRequest.source(dataMap);
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.doc(dataMap);
-            UpdateResponse updateResponse = transportClient.update(updateRequest).get();
+            transportClient.update(updateRequest).get();
         } catch (InterruptedException e) {
+            logger.error("更新数据异常", e);
         } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
+        }
+    }
+
+    @Override
+    public void updateList(String index, String type, String id,
+                           Map<String, Object> dataMap, String listName, String mainKey) {
+        try {
+            Object mainObj = dataMap.get(mainKey);
+            String mainValue;
+            if (null == mainObj || StringUtils.isEmpty(mainValue = mainObj.toString())) {
+                logger.error("mainkey错误");
+                return;
+            }
+            Map<String, Object> params = new HashMap<>();
+            params.put("message", dataMap);
+            IndexRequest indexRequest = new IndexRequest(index, type, id);
+            indexRequest.source(new JSONObject() {{
+                put(listName, new JSONArray() {{
+                    add(dataMap.toString());
+                }});
+            }}.toString());
+            UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
+            updateRequest.script(new Script(ScriptType.INLINE,
+                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');"
+                            + "ctx._source." + listName + ".add(params.message)",
+                    Script.DEFAULT_SCRIPT_LANG, params));
+            transportClient.update(updateRequest).get();
+        } catch (InterruptedException e) {
+            logger.error("更新数据异常", e);
+        } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
+        }
+    }
+
+    @Override
+    public void deleteList(String index, String type, String id,
+                           Map<String, Object> dataMap, String listName, String mainKey) {
+        try {
+            Object mainObj = dataMap.get(mainKey);
+            String mainValue;
+            if (null == mainObj || StringUtils.isEmpty(mainValue = mainObj.toString())) {
+                logger.error("mainkey错误");
+                return;
+            }
+            UpdateRequest updateRequest = new UpdateRequest(index, type, id);
+            updateRequest.script(new Script(ScriptType.INLINE,
+                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');",
+                    Script.DEFAULT_SCRIPT_LANG, Collections.emptyMap()));
+            transportClient.update(updateRequest).get();
+        } catch (InterruptedException e) {
+            logger.error("更新数据异常", e);
+        } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
         }
     }
 

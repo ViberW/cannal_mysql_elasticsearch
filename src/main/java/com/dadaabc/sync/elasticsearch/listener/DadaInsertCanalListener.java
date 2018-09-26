@@ -2,6 +2,7 @@ package com.dadaabc.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
+import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.event.DadaInsertCanalEvent;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
 import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
@@ -46,7 +47,14 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
                 + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         //构建元数据map
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
-        elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+        Integer main = dbModel.getMain();
+        if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
+            //放入嵌套数组中
+            elasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    dataMap, dbModel.getListname(), dbModel.getMainKey());
+        } else {
+            elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+        }
         logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
                 + ",table=" + dbModel.getTable() + ",data=" + JsonUtil.toJson(dataMap));
     }

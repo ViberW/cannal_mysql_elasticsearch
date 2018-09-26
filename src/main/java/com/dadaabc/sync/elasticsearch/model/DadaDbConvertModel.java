@@ -13,7 +13,7 @@ public class DadaDbConvertModel {
     private String include;
     private String exclude;
     private String pkstr;
-    private Boolean main;
+    private Integer main;
     private Map<String, String> convert;
 
     public String getDatabase() {
@@ -56,11 +56,11 @@ public class DadaDbConvertModel {
         this.pkstr = pkstr;
     }
 
-    public Boolean getMain() {
+    public Integer getMain() {
         return main;
     }
 
-    public void setMain(Boolean main) {
+    public void setMain(Integer main) {
         this.main = main;
     }
 

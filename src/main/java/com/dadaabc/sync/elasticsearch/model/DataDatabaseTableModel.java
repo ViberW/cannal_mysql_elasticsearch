@@ -12,7 +12,11 @@ import java.util.Map;
  */
 public class DataDatabaseTableModel extends DatabaseTableModel {
 
-    private Boolean main;
+    private String listname;
+
+    private String mainKey;
+
+    private Integer main;
 
     private String pkStr;
 
@@ -29,11 +33,27 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
     public DataDatabaseTableModel() {
     }
 
-    public Boolean getMain() {
+    public String getListname() {
+        return listname;
+    }
+
+    public void setListname(String listname) {
+        this.listname = listname;
+    }
+
+    public String getMainKey() {
+        return mainKey;
+    }
+
+    public void setMainKey(String mainKey) {
+        this.mainKey = mainKey;
+    }
+
+    public Integer getMain() {
         return main;
     }
 
-    public void setMain(Boolean main) {
+    public void setMain(Integer main) {
         this.main = main;
     }
 

@@ -9,4 +9,10 @@ import com.star.sync.elasticsearch.model.IndexTypeModel;
  */
 public class DadaIndexTypeModel extends IndexTypeModel {
 
+    public DadaIndexTypeModel() {
+    }
+
+    public DadaIndexTypeModel(String index, String type) {
+        super(index, type);
+    }
 }

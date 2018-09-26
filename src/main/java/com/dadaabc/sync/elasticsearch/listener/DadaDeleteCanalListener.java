@@ -2,6 +2,7 @@ package com.dadaabc.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
+import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.event.DadaDeleteCanalEvent;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
 import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
@@ -42,13 +43,18 @@ public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDelet
         }
         logger.info("insert_column_id_info insert主键id,database=" + dbModel.getDatabase() +
                 ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
-        Boolean main = dbModel.getMain();
-        if (null != main && main) {
+        Integer main = dbModel.getMain();
+        if (MainTypeEnum.MAIN.getCode().equals(main)) {
             elasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
-        } else {
+        } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main)) {
             //删除es中的部分字段信息,置为null
             Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns, primaryKey);
             elasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+        } else if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
+            //将对应的mapping的信息删除
+            Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns, primaryKey);
+            elasticsearchService.deleteList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    dbModel.getListname(), dataMap, dbModel.getMainKey());
         }
         logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
                 + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());

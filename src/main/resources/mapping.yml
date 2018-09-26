@@ -1,20 +1,30 @@
 dada:
   db-es:
     mappings:
-      - index: info
-        type: infos
+      - index: info #索引index
+        type: infos #索引type
         dbs:
-          - database: infos
-            table: info_name
-            include: id,name
-            exclude:
-            pkstr: 'id'
-            main: true
-            convert: {name: names}
+          - database: infos  #数据库名
+            table: info_name #表名
+            include: id,name #包含字段,默认全部
+            exclude:         #不转换字段
+            pkstr: 'id'      #作为索引的id的对应字段
+            main: 1          #表类型 1-主表 2-1对1表 3-1对n表
+            list:
+            convert: {name: names}  #需要转换的字段 字段name转换为names
           - database: infos
             table: info_phone
             include:
             exclude: 'id'
             pkstr: "id"
-            main: false
+            main: 2
+            list:
+            convert: {phone: phones}
+          - database: infos
+            table: info_class
+            include:
+            exclude: 'id'
+            pkstr: "id"
+            main: 3
+            list: 'infoClasses:key' # 1对n时转化成list的名称及对应主键 默认为表名称:id
             convert: {phone: phones}

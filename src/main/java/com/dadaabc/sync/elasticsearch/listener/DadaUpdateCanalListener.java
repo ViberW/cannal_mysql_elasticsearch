@@ -2,6 +2,7 @@ package com.dadaabc.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
+import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.event.DadaUpdateCanalEvent;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
 import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
@@ -40,11 +41,18 @@ public class DadaUpdateCanalListener extends DadaAbstractCanalListener<DadaUpdat
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        logger.info("column信息:"+columns.toString());
+        logger.info("column信息:" + columns.toString());
         logger.info("update_column_id_info update主键id,database=" + dbModel.getTable()
                 + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
-        elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+        Integer main = dbModel.getMain();
+        if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
+            //更新入嵌套数组中
+            elasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    dataMap, dbModel.getListname(), dbModel.getMainKey());
+        } else {
+            elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+        }
         logger.info("update_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
                 + ",table=" + dbModel.getTable() + ",data=" + dataMap);
     }

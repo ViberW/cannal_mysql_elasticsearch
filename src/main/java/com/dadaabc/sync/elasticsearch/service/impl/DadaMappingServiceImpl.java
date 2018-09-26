@@ -1,6 +1,7 @@
 package com.dadaabc.sync.elasticsearch.service.impl;
 
 import com.dadaabc.sync.elasticsearch.common.BaseConstants;
+import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.model.*;
 import com.dadaabc.sync.elasticsearch.service.DadaMappingService;
 import com.dadaabc.sync.elasticsearch.util.DateUtils;
@@ -38,6 +39,12 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
     private Map<String, DadaMappingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
     private BiMap<DataDatabaseTableModel, DadaConnectModel> dbSingleMapping;
 
+    @Override
+    public DadaDatabaseModel getDatabaseWithIndexType(String index, String type) {
+        return dbEsBiMapping.inverse().get(new DadaIndexTypeModel(index, type));
+    }
+
+    @Override
     public DadaConnectModel getColumnWithData(String database, String table) {
         return dbSingleMapping.get(new DataDatabaseTableModel(database, table));
     }
@@ -65,6 +72,7 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
         String[] split;
         dbSingleMapping = HashBiMap.create();
         for (DadaConvertModel model : mappings) {
+            boolean havaMain = false;
             dadaIndexTypeModel = new DadaIndexTypeModel();
             dadaIndexTypeModel.setIndex(model.getIndex());
             dadaIndexTypeModel.setType(model.getType());
@@ -76,7 +84,10 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                 tableModel = new DataDatabaseTableModel();
                 tableModel.setDatabase(dbConvertModel.getDatabase());
                 tableModel.setTable(dbConvertModel.getTable());
-                tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : false);
+                tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : MainTypeEnum.MAIN.getCode());
+                if (havaMain && MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
+                    // TODO: 18-9-26  有重复的main 报错并终止加载
+                }
                 tableModel.setPkStr(StringUtils.isNotEmpty(dbConvertModel.getPkstr()) ? BaseConstants.DEFAULT_ID : dbConvertModel.getPkstr());
                 include = dbConvertModel.getInclude();
                 if (StringUtils.isNotEmpty(include)) {
@@ -89,6 +100,15 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                     tableModel.setExcludeField(Arrays.asList(split));
                 }
                 models.add(tableModel);
+                if (MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
+                    havaMain = true;
+                    if (StringUtils.isEmpty(dadaIndexTypeModel.getIndex())) {
+                        dadaIndexTypeModel.setIndex(tableModel.getDatabase());
+                    }
+                    if (StringUtils.isEmpty(dadaIndexTypeModel.getType())) {
+                        dadaIndexTypeModel.setIndex(tableModel.getTable());
+                    }
+                }
                 dadaConnectModel = new DadaConnectModel();
                 dadaConnectModel.setDbModel(tableModel);
                 dadaConnectModel.setEsModel(dadaIndexTypeModel);

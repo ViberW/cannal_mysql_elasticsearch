@@ -18,4 +18,10 @@ public interface DadaElasticsearchService {
     void deleteById(String index, String type, String id);
 
     void updateSet(String index, String type, String id, Map<String, Object> dataMap);
+
+    void updateList(String index, String type, String id,
+                    Map<String, Object> dataMap, String listName, String mainKey);
+
+    void deleteList(String index, String type, String id,
+                    Map<String, Object> dataMap, String listName, String mainKey);
 }

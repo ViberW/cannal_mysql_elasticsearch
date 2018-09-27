@@ -1,6 +1,8 @@
 package com.dadaabc.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.dadaabc.sync.elasticsearch.common.BaseConstants;
+import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.model.DadaConnectModel;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
 import com.dadaabc.sync.elasticsearch.model.Data2EsFieldModel;
@@ -79,6 +81,15 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
             }
         });
         return jsonMap;
+    }
+
+    protected Object parseColumnsByKey(List<CanalEntry.Column> columns, String key) {
+        CanalEntry.Column column1 = columns.stream().filter(column ->
+                key.equals(column.getName())).findFirst().orElse(null);
+        if (null != column1) {
+            return column1.getValue();
+        }
+        return null;
     }
 
     private String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel) {

@@ -14,6 +14,7 @@ public class DadaDbConvertModel {
     private String exclude;
     private String pkstr;
     private Integer main;
+    private String listkv;
     private Map<String, String> convert;
 
     public String getDatabase() {
@@ -70,5 +71,13 @@ public class DadaDbConvertModel {
 
     public void setConvert(Map<String, String> convert) {
         this.convert = convert;
+    }
+
+    public String getListkv() {
+        return listkv;
+    }
+
+    public void setListkv(String listkv) {
+        this.listkv = listkv;
     }
 }

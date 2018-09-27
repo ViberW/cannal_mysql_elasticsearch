@@ -14,6 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -24,6 +26,8 @@ import java.util.*;
 @Service
 @ConfigurationProperties(prefix = "dada.db-es")
 public class DadaMappingServiceImpl implements DadaMappingService, InitializingBean {
+
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private List<DadaConvertModel> mappings = new ArrayList<>();
 
@@ -88,7 +92,18 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                 if (havaMain && MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
                     // TODO: 18-9-26  有重复的main 报错并终止加载
                 }
-                tableModel.setPkStr(StringUtils.isNotEmpty(dbConvertModel.getPkstr()) ? BaseConstants.DEFAULT_ID : dbConvertModel.getPkstr());
+                String listkv = dbConvertModel.getListkv();
+                if (MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain())) {
+                    if (StringUtils.isNotEmpty(listkv)) {
+                        String[] split1 = listkv.split(BaseConstants.DEFAULT_SPLIT_2);
+                        tableModel.setListname(split1[0]);
+                        tableModel.setMainKey(split1[1]);
+                    } else {
+                        tableModel.setListname(tableModel.getTable());
+                        tableModel.setMainKey(BaseConstants.DEFAULT_ID);
+                    }
+                }
+                tableModel.setPkStr(StringUtils.isEmpty(dbConvertModel.getPkstr()) ? BaseConstants.DEFAULT_ID : dbConvertModel.getPkstr());
                 include = dbConvertModel.getInclude();
                 if (StringUtils.isNotEmpty(include)) {
                     split = include.split(BaseConstants.DEFAULT_SPLIT);
@@ -122,12 +137,13 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
         mysqlTypeElasticsearchTypeMapping.put("text", data -> data);
         mysqlTypeElasticsearchTypeMapping.put("blob", data -> data);
         mysqlTypeElasticsearchTypeMapping.put("int", Long::valueOf);
-        mysqlTypeElasticsearchTypeMapping.put("date", DateUtils::strToDate4GMT);
-        mysqlTypeElasticsearchTypeMapping.put("time", DateUtils::strToDate4GMT);
+        mysqlTypeElasticsearchTypeMapping.put("date", DateUtils::convertDate);
+        mysqlTypeElasticsearchTypeMapping.put("time", DateUtils::convertDate);
         mysqlTypeElasticsearchTypeMapping.put("float", Double::valueOf);
         mysqlTypeElasticsearchTypeMapping.put("double", Double::valueOf);
         mysqlTypeElasticsearchTypeMapping.put("decimal", Double::valueOf);
     }
+
 
     @FunctionalInterface
     private interface Converter {

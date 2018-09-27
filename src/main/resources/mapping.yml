@@ -1,30 +1,46 @@
 dada:
   db-es:
     mappings:
-      - index: info #索引index
-        type: infos #索引type
+      - index: student #索引index,默认以主表作为database作为index
+        type: student #索引type,默认以主表表名作为type
         dbs:
           - database: infos  #数据库名
-            table: info_name #表名
-            include: id,name #包含字段,默认全部
+            table: student #表名
+            include:  #包含字段,默认全部
             exclude:         #不转换字段
-            pkstr: 'id'      #作为索引的id的对应字段
+            pkstr: id      #作为索引的id的对应字段
             main: 1          #表类型 1-主表 2-1对1表 3-1对n表
-            list:
-            convert: {name: names}  #需要转换的字段 字段name转换为names
+            listkv:
+            convert: {}  #需要转换的字段 字段name转换为names
           - database: infos
-            table: info_phone
-            include:
-            exclude: 'id'
-            pkstr: "id"
+            table: student_extend
+            include: s_last_bank,s_sell_time,can_atrial_num,is_attention,s_old_zhujiao,s_is_border,s_end_date,touch_student,class_time_week,last_active,assessment_level,learn_start_year,is_take_training
+            exclude: id
+            pkstr: id
             main: 2
-            list:
-            convert: {phone: phones}
+            listkv:
+            convert: {s_last_bank: slastbank}
           - database: infos
-            table: info_class
+            table: stu_contract
             include:
-            exclude: 'id'
-            pkstr: "id"
+            exclude:
+            pkstr: sid
             main: 3
-            list: 'infoClasses:key' # 1对n时转化成list的名称及对应主键 默认为表名称:id
-            convert: {phone: phones}
+            listkv: 'stu_contract:ID' # 1对n时转化成list的名称及对应主键 默认为表名称:id
+            convert: {}
+          - database: infos
+            table: tsr_task
+            include: handler_id,status
+            exclude: id
+            pkstr: student_id
+            main: 2
+            listkv:
+            convert: {}
+          - database: infos
+            table: ts_vacate
+            include:
+            exclude:
+            pkstr: uid
+            main: 3
+            listkv: 'tsvacate:id' # 1对n时转化成list的名称及对应主键 默认为表名称:id
+            convert: {}

@@ -36,7 +36,7 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
         List<Column> columns = rowData.getAfterColumnsList();
         String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
         Column idColumn = columns.stream().filter(column ->
-                column.getIsKey() && primaryKey.equals(column.getName())).findFirst().orElse(null);
+                primaryKey.equals(column.getName())).findFirst().orElse(null);
         if (idColumn == null || StringUtils.isBlank(idColumn.getValue())) {
             logger.error("insert_column_find_null_warn insert从column中找不到主键" +
                     ",database=" + dbModel.getDatabase() + ",table=" + dbModel.getTable() +

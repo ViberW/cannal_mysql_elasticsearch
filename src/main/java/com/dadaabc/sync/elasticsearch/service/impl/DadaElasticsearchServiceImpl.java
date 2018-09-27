@@ -9,11 +9,9 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.UpdateByQueryAction;
-import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
@@ -21,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,21 +79,23 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
             }
             Map<String, Object> params = new HashMap<>();
             params.put("message", dataMap);
-            IndexRequest indexRequest = new IndexRequest(index, type, id);
-            indexRequest.source(new JSONObject() {{
-                put(listName, new JSONArray() {{
-                    add(dataMap.toString());
-                }});
-            }}.toString());
+            params.put("field", listName);
+            IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
+                    .startObject().array(listName, dataMap).endObject());
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.script(new Script(ScriptType.INLINE,
-                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');"
-                            + "ctx._source." + listName + ".add(params.message)",
-                    Script.DEFAULT_SCRIPT_LANG, params));
+                    Script.DEFAULT_SCRIPT_LANG,
+                    "if(ctx._source.containsKey(params.field))" +
+                            "{ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');"
+                            + "ctx._source." + listName + ".add(params.message)}" +
+                            "else{ctx._source." + listName + "=[params.message]}",
+                    params));
             transportClient.update(updateRequest).get();
         } catch (InterruptedException e) {
             logger.error("更新数据异常", e);
         } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
+        } catch (IOException e) {
             logger.error("更新数据异常", e);
         }
     }
@@ -111,8 +112,9 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
             }
             UpdateRequest updateRequest = new UpdateRequest(index, type, id);
             updateRequest.script(new Script(ScriptType.INLINE,
-                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');",
-                    Script.DEFAULT_SCRIPT_LANG, Collections.emptyMap()));
+                    Script.DEFAULT_SCRIPT_LANG,
+                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
+                    Collections.emptyMap()));
             transportClient.update(updateRequest).get();
         } catch (InterruptedException e) {
             logger.error("更新数据异常", e);

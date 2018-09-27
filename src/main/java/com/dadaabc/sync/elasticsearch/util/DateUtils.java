@@ -50,6 +50,17 @@ public class DateUtils {
         return dateFormat.format(date);
     }
 
+    public static Date convertDate(String date) {
+        if (StringUtils.isBlank(date)) {
+            return null;
+        }
+        if (date.length() <= 10) {
+           return strToDate3(date);
+        }else {
+            return strToDate(date);
+        }
+    }
+
     /**
      * 将日期字符串按照指定格式转换成Date类型
      *

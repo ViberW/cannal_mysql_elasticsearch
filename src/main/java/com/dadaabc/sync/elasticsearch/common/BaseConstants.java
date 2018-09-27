@@ -10,6 +10,7 @@ public class BaseConstants {
     public static final String USUAL_SIGN = "*";
     public static final String DEFAULT_ID = "id";
     public static final String DEFAULT_SPLIT = ",";
+    public static final String DEFAULT_SPLIT_2 = ":";
 
     public static final String SCHEMA = "schema";
     public static final String TABLE = "table";

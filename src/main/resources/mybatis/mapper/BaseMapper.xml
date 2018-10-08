@@ -76,4 +76,26 @@
             ${key} <![CDATA[ >= ]]> #{minPK} AND ${key} <![CDATA[ < ]]> #{maxPK}
         LOCK IN SHARE MODE
     </select>
+    <!--veelur自定义-->
+    <select id="selectByPKWithPage" resultType="java.util.HashMap">
+        SELECT
+            *
+        FROM
+            ${databaseName}.${tableName}
+        WHERE
+            ${orderSign} <![CDATA[ >= ]]> #{begin}
+            AND
+            ${orderSign} <![CDATA[ < ]]> #{end}
+        limit ${start},${limit}
+    </select>
+    <select id="selectByPKStr" resultType="java.util.HashMap">
+        SELECT
+            *
+        FROM
+            ${databaseName}.${tableName}
+        WHERE ${pkStr} in
+        <foreach collection="pkStrs" item="str" open="(" close=")" separator=",">
+            ${str}
+        </foreach>
+    </select>
 </mapper>

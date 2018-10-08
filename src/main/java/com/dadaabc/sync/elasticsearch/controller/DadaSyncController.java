@@ -7,6 +7,7 @@ import com.star.sync.elasticsearch.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,10 +31,14 @@ public class DadaSyncController {
      * @return
      */
     @RequestMapping("/byIndex")
-    public Response<Boolean> syncTable(@Validated SyncByIndexRequest request) {
-        logger.debug("request_info: " + JsonUtil.toJson(request));
+    public Response<Boolean> syncTable(@Validated SyncByIndexRequest request, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            logger.info("全量同步信息错误" + bindingResult.getFieldErrors().toString());
+            return Response.fail(-1, bindingResult.getFieldErrors().toString());
+        }
+        logger.info("request_info: " + JsonUtil.toJson(request));
         Response<Boolean> response = Response.success(syncService.syncByIndex(request));
-        logger.debug("response_info: " + JsonUtil.toJson(request));
+        logger.info("response_info: " + JsonUtil.toJson(request));
         return response;
     }
 }

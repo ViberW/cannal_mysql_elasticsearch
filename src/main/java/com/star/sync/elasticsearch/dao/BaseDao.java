@@ -30,4 +30,15 @@ public interface BaseDao {
 
     List<Map<String, Object>> selectByPKIntervalLockInShareMode(@Param("key") String key, @Param("minPK") long minPK, @Param("maxPK") long maxPK, @Param("databaseName") String databaseName, @Param("tableName") String tableName);
 
+    /**
+     * veelur自定义方法
+     */
+    List<Map<String, Object>> selectByPKWithPage(@Param("databaseName")String database, @Param("tableName")String table,
+                                                 @Param("start")int start, @Param("limit")int limit,
+                                                 @Param("orderSign")String orderSign,
+                                                 @Param("begin")String begin, @Param("end")String end);
+
+    List<Map<String, Object>> selectByPKStr(@Param("databaseName")String database, @Param("tableName")String table,
+                                            @Param("pkStr")String pkStr,@Param("pkStrs")List<Object> pkStrs);
+
 }

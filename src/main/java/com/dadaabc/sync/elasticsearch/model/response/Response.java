@@ -18,12 +18,21 @@ public class Response<T> {
         this.data = data;
     }
 
+    public Response(int code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
     public Response(T data) {
         this.data = data;
     }
 
     public static <T> Response<T> success(T result) {
         return new Response<>(result);
+    }
+
+    public static <T> Response<T> fail(int code, String message) {
+        return new Response<>(code, message);
     }
 
     public int getCode() {

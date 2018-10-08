@@ -140,11 +140,12 @@ public class DadaSyncServiceImpl implements DadaSyncService {
     }
 
     private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, DataDatabaseTableModel dbModel) {
-        Map<String, Object> jsonMap = new HashMap<>();
+        List<Map<String, Object>> jsonMaps = new ArrayList<>();
         maps.forEach(map -> {
             if (map == null) {
                 return;
             }
+            Map<String, Object> jsonMap = new HashMap<>();
             map.forEach((s, o) -> {
                 String esField = convertColumnAndEsName(s, dbModel);
                 if (StringUtils.isNotEmpty(esField)) {
@@ -152,8 +153,11 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                             : mappingService.getElasticsearchTypeObject(o.getClass().getTypeName(), String.valueOf(o)));
                 }
             });
+            if (!CollectionUtils.isEmpty(jsonMap)) {
+                jsonMaps.add(jsonMap);
+            }
         });
-        return maps;
+        return jsonMaps;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.dadaabc.sync.elasticsearch.service.impl;
 
 import com.dadaabc.sync.elasticsearch.common.BaseConstants;
 import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
+import com.dadaabc.sync.elasticsearch.exception.InfoNotRightException;
 import com.dadaabc.sync.elasticsearch.model.*;
 import com.dadaabc.sync.elasticsearch.service.DadaMappingService;
 import com.dadaabc.sync.elasticsearch.util.DateUtils;
@@ -27,9 +28,8 @@ import java.util.*;
 @ConfigurationProperties(prefix = "dada.db-es")
 public class DadaMappingServiceImpl implements DadaMappingService, InitializingBean {
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
     private List<DadaConvertModel> mappings = new ArrayList<>();
+
 
     public List<DadaConvertModel> getMappings() {
         return mappings;
@@ -61,10 +61,10 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
     }
 
     @Override
-    public void afterPropertiesSet() {
+    public void afterPropertiesSet() throws InfoNotRightException {
         dbEsBiMapping = HashBiMap.create();
         if (CollectionUtils.isEmpty(mappings)) {
-            // TODO: 18-9-21 停止
+            throw new InfoNotRightException("mapping映射为空");
         }
         DadaDatabaseModel dadaDatabaseModel;
         DadaIndexTypeModel dadaIndexTypeModel;
@@ -75,6 +75,7 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
         String exclude;
         String[] split;
         dbSingleMapping = HashBiMap.create();
+
         for (DadaConvertModel model : mappings) {
             boolean havaMain = false;
             dadaIndexTypeModel = new DadaIndexTypeModel();
@@ -90,7 +91,7 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                 tableModel.setTable(dbConvertModel.getTable());
                 tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : MainTypeEnum.MAIN.getCode());
                 if (havaMain && MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
-                    // TODO: 18-9-26  有重复的main 报错并终止加载
+                    throw new InfoNotRightException("包含重复的mapping-main信息");
                 }
                 String listkv = dbConvertModel.getListkv();
                 if (MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain())) {

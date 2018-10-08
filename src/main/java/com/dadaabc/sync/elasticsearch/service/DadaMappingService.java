@@ -3,6 +3,8 @@ package com.dadaabc.sync.elasticsearch.service;
 import com.dadaabc.sync.elasticsearch.model.DadaConnectModel;
 import com.dadaabc.sync.elasticsearch.model.DadaDatabaseModel;
 
+import java.util.List;
+
 /**
  * @author: veelur
  * @date: 18-9-21
@@ -22,4 +24,5 @@ public interface DadaMappingService {
     DadaConnectModel getColumnWithData(String database, String table);
 
     DadaDatabaseModel getDatabaseWithIndexType(String index, String type);
+
 }

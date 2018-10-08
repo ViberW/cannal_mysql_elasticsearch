@@ -8,6 +8,7 @@ import com.dadaabc.sync.elasticsearch.service.DadaElasticsearchService;
 import com.dadaabc.sync.elasticsearch.service.DadaMappingService;
 import com.dadaabc.sync.elasticsearch.service.DadaSyncService;
 import com.star.sync.elasticsearch.dao.BaseDao;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -84,8 +86,8 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                     return false;
                 }
                 mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
-
-                poolDeal(cachedThreadPool, models, mapList, pkStrs, request);
+                poolDeal(cachedThreadPool, models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList()),
+                        mapList, pkStrs, request);
 
                 totalCount++;
                 logger.info("导入es信息单词循环成功");
@@ -105,31 +107,80 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             Object orDefault;
             for (DataDatabaseTableModel tableModel : models) {
                 oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
-                subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
-                if (!CollectionUtils.isEmpty(subMaps)) {
-                    if (oneToMore) {
-                        for (Map<String, Object> subMap : subMaps) {
-
-                            orDefault = mapList.get(tableModel.getPkStr())
-                                    .get(tableModel.getListname());
-                            if (null != orDefault) {
-                                ((List<Map<String, Object>>) orDefault).add(subMap);
-                            } else {
-                                mapList.get(tableModel.getPkStr()).put(tableModel.getListname(),
-                                        new ArrayList<Map<String, Object>>() {{
-                                            add(subMap);
-                                        }});
+                try {
+                    subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
+                    if (!CollectionUtils.isEmpty(subMaps)) {
+                        subMaps = parseColumnsToMapList(subMaps, tableModel);
+                        if (oneToMore) {
+                            for (Map<String, Object> subMap : subMaps) {
+                                orDefault = mapList.get(tableModel.getPkStr())
+                                        .get(tableModel.getListname());
+                                if (null != orDefault) {
+                                    ((List<Map<String, Object>>) orDefault).add(subMap);
+                                } else {
+                                    mapList.get(tableModel.getPkStr()).put(tableModel.getListname(),
+                                            new ArrayList<Map<String, Object>>() {{
+                                                add(subMap);
+                                            }});
+                                }
+                            }
+                        } else {
+                            for (Map<String, Object> subMap : subMaps) {
+                                mapList.get(tableModel.getPkStr()).putAll(subMap);
                             }
                         }
-                    } else {
-                        for (Map<String, Object> subMap : subMaps) {
-                            mapList.get(tableModel.getPkStr()).putAll(subMap);
-                        }
                     }
+                    //批量导入es中
+                    elasticsearchService.batchInsertById(request.getIndex(), request.getType(), mapList);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-            //批量导入es中
-            elasticsearchService.batchInsertById(request.getIndex(), request.getType(), mapList);
         });
+    }
+
+    private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, DataDatabaseTableModel dbModel) {
+        Map<String, Object> jsonMap = new HashMap<>();
+        maps.forEach(map -> {
+            if (map == null) {
+                return;
+            }
+            map.forEach((s, o) -> {
+                String esField = convertColumnAndEsName(s, dbModel);
+                if (StringUtils.isNotEmpty(esField)) {
+                    jsonMap.put(esField, null == o ? null
+                            : mappingService.getElasticsearchTypeObject(o.getClass().getTypeName(), String.valueOf(o)));
+                }
+            });
+        });
+        return maps;
+    }
+
+    @Override
+    public String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel) {
+        if (StringUtils.isEmpty(columnName)) {
+            return null;
+        }
+        List<String> includeField = dbModel.getIncludeField();
+        if (null != includeField && includeField.contains(columnName.trim())) {
+            return convertEsColumn(columnName.trim(), dbModel);
+        }
+        if (null == includeField || includeField.isEmpty()) {
+            List<String> excludeField = dbModel.getExcludeField();
+            if (null == excludeField || !excludeField.contains(columnName.trim())) {
+                return convertEsColumn(columnName.trim(), dbModel);
+            }
+        }
+        return null;
+    }
+
+    private String convertEsColumn(String columnName, DataDatabaseTableModel dbModel) {
+        Map<String, String> fields = dbModel.getConvert();
+        if (null != fields && !fields.isEmpty()) {
+            if (fields.containsKey(columnName)) {
+                return fields.get(columnName);
+            }
+        }
+        return columnName;
     }
 }

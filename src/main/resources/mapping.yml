@@ -15,7 +15,7 @@ dada:
           - database: infos
             table: student_extend
             include: s_last_bank,s_sell_time,can_atrial_num,is_attention,s_old_zhujiao,s_is_border,s_end_date,touch_student,class_time_week,last_active,assessment_level,learn_start_year,is_take_training
-            exclude: id
+            exclude:
             pkstr: id
             main: 2
             listkv:

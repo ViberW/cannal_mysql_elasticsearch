@@ -24,7 +24,7 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
 
     private List<String> excludeField;
 
-    private Map<String, Data2EsFieldModel> fields;
+    private Map<String, String> convert;
 
     public DataDatabaseTableModel(String database, String table) {
         super(database, table);
@@ -81,11 +81,11 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
         this.excludeField = excludeField;
     }
 
-    public Map<String, Data2EsFieldModel> getFields() {
-        return fields;
+    public Map<String, String> getConvert() {
+        return convert;
     }
 
-    public void setFields(Map<String, Data2EsFieldModel> fields) {
-        this.fields = fields;
+    public void setConvert(Map<String, String> convert) {
+        this.convert = convert;
     }
 }

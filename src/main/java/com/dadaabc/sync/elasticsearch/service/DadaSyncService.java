@@ -1,5 +1,6 @@
 package com.dadaabc.sync.elasticsearch.service;
 
+import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
 import com.dadaabc.sync.elasticsearch.model.request.SyncByIndexRequest;
 
 /**
@@ -10,4 +11,6 @@ import com.dadaabc.sync.elasticsearch.model.request.SyncByIndexRequest;
 public interface DadaSyncService {
 
     boolean syncByIndex(SyncByIndexRequest request);
+
+    String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel);
 }

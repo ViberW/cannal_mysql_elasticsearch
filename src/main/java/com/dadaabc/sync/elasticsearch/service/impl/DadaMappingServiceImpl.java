@@ -115,6 +115,7 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                     split = exclude.split(BaseConstants.DEFAULT_SPLIT);
                     tableModel.setExcludeField(Arrays.asList(split));
                 }
+                tableModel.setConvert(dbConvertModel.getConvert());
                 models.add(tableModel);
                 if (MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
                     havaMain = true;

@@ -1,22 +1,20 @@
 package com.dadaabc.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.dadaabc.sync.elasticsearch.common.BaseConstants;
-import com.dadaabc.sync.elasticsearch.common.MainTypeEnum;
 import com.dadaabc.sync.elasticsearch.model.DadaConnectModel;
 import com.dadaabc.sync.elasticsearch.model.DadaIndexTypeModel;
-import com.dadaabc.sync.elasticsearch.model.Data2EsFieldModel;
 import com.dadaabc.sync.elasticsearch.model.DataDatabaseTableModel;
 import com.dadaabc.sync.elasticsearch.service.DadaMappingService;
+import com.dadaabc.sync.elasticsearch.service.DadaSyncService;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.star.sync.elasticsearch.event.CanalEvent;
 import com.star.sync.elasticsearch.listener.AbstractCanalListener;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 
-import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +27,10 @@ import java.util.Map;
 public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implements ApplicationListener<EVENT> {
     private static final Logger logger = LoggerFactory.getLogger(AbstractCanalListener.class);
 
-    @Resource
+    @Autowired
     private DadaMappingService mappingService;
+    @Autowired
+    private DadaSyncService dadaSyncService;
 
     @Override
     public void onApplicationEvent(EVENT event) {
@@ -60,7 +60,7 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
             if (column == null) {
                 return;
             }
-            String esField = convertColumnAndEsName(column.getName(), dbModel);
+            String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
             if (StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue()));
             }
@@ -75,7 +75,7 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
             if (column == null) {
                 return;
             }
-            String esField = convertColumnAndEsName(column.getName(), dbModel);
+            String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
             if (!primaryKey.equals(column.getName()) && StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, null);
             }
@@ -90,35 +90,6 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
             return column1.getValue();
         }
         return null;
-    }
-
-    private String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel) {
-        if (StringUtils.isEmpty(columnName)) {
-            return null;
-        }
-        List<String> includeField = dbModel.getIncludeField();
-        if (null != includeField && includeField.contains(columnName.trim())) {
-            //转换字段
-            return convertEsColumn(columnName.trim(), dbModel);
-        }
-        if (null == includeField || includeField.isEmpty()) {
-            List<String> excludeField = dbModel.getExcludeField();
-            if (null == excludeField || !excludeField.contains(columnName.trim())) {
-                //转换字段
-                return convertEsColumn(columnName.trim(), dbModel);
-            }
-        }
-        return null;
-    }
-
-    private String convertEsColumn(String columnName, DataDatabaseTableModel dbModel) {
-        Map<String, Data2EsFieldModel> fields = dbModel.getFields();
-        if (null != fields && !fields.isEmpty()) {
-            if (fields.containsKey(columnName)) {
-                return fields.get(columnName).getEsField();
-            }
-        }
-        return columnName;
     }
 
     protected abstract void doSync(DataDatabaseTableModel dbModel, DadaIndexTypeModel esModel, CanalEntry.RowData rowData);

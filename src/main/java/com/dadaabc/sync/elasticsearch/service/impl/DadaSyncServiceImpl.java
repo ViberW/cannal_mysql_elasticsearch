@@ -48,8 +48,8 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             return false;
         }
         //根据对应的多个database获取数据
-        int start;
-        int limit = null == request.getLimit() ? 500 : request.getLimit();
+        int start = 0;
+        int limit = request.getLimit();
         DataDatabaseTableModel mainModel = models.stream().filter(column ->
                 null != column.getMain() && MainTypeEnum.MAIN.getCode().equals(column.getMain()))
                 .findFirst().orElse(null);
@@ -63,15 +63,17 @@ public class DadaSyncServiceImpl implements DadaSyncService {
         Map<String, Map<String, Object>> mapList;
         int totalCount = 0;
         ExecutorService cachedThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
+        Object pk = null;
         try {
             do {
-                start = 0;
                 maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(), start, limit,
+                        mainModel.getPkStr(), pk,
                         request.getOrderSign(), request.getStart(), request.getEnd());
                 if (CollectionUtils.isEmpty(maps)) {
                     logger.info("获取信息完毕");
                     break;
                 }
+                pk = maps.get(maps.size() - 1).get(mainModel.getPkStr());
                 //查询其他的附表
                 pkStrs = new ArrayList<>();
                 for (Map<String, Object> map : maps) {

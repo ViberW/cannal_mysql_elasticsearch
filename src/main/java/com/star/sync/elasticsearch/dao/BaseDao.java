@@ -35,6 +35,7 @@ public interface BaseDao {
      */
     List<Map<String, Object>> selectByPKWithPage(@Param("databaseName")String database, @Param("tableName")String table,
                                                  @Param("start")int start, @Param("limit")int limit,
+                                                 @Param("pkStr")String pkStr,@Param("pk")Object pk,
                                                  @Param("orderSign")String orderSign,
                                                  @Param("begin")String begin, @Param("end")String end);
 

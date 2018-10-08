@@ -86,7 +86,11 @@
             ${orderSign} <![CDATA[ >= ]]> #{begin}
             AND
             ${orderSign} <![CDATA[ < ]]> #{end}
-        limit ${start},${limit}
+            <if test="null != pk">
+                AND ${pkStr} <![CDATA[ > ]]> #{pk}
+            </if>
+        order by ${pkStr} asc
+        limit #{start},#{limit}
     </select>
     <select id="selectByPKStr" resultType="java.util.HashMap">
         SELECT
@@ -95,7 +99,7 @@
             ${databaseName}.${tableName}
         WHERE ${pkStr} in
         <foreach collection="pkStrs" item="str" open="(" close=")" separator=",">
-            ${str}
+            #{str}
         </foreach>
     </select>
 </mapper>

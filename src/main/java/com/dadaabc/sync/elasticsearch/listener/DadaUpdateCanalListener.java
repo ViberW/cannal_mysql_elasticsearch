@@ -41,9 +41,6 @@ public class DadaUpdateCanalListener extends DadaAbstractCanalListener<DadaUpdat
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        logger.info("column信息:" + columns.toString());
-        logger.info("update_column_id_info update主键id,database=" + dbModel.getTable()
-                + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
@@ -53,7 +50,5 @@ public class DadaUpdateCanalListener extends DadaAbstractCanalListener<DadaUpdat
         } else {
             elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }
-        logger.info("update_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
-                + ",table=" + dbModel.getTable() + ",data=" + dataMap);
     }
 }

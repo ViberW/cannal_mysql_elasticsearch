@@ -43,8 +43,6 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        logger.info("insert_column_id_info insert主键id,database=" + dbModel.getDatabase()
-                + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         //构建元数据map
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
         Integer main = dbModel.getMain();
@@ -55,7 +53,5 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
         } else {
             elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }
-        logger.info("insert_es_info 同步es插入操作成功！database=" + dbModel.getDatabase()
-                + ",table=" + dbModel.getTable() + ",data=" + JsonUtil.toJson(dataMap));
     }
 }

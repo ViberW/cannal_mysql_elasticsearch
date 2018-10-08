@@ -42,8 +42,6 @@ public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDelet
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        logger.info("insert_column_id_info delete主键id,database=" + dbModel.getDatabase() +
-                ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
         Integer main = dbModel.getMain();
         if (MainTypeEnum.MAIN.getCode().equals(main)) {
             elasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
@@ -58,7 +56,5 @@ public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDelet
             elasticsearchService.deleteList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
                     dataMap, dbModel.getListname(), dbModel.getMainKey());
         }
-        logger.info("insert_es_info 同步es删除操作成功！database=" + dbModel.getDatabase()
-                + ",table=" + dbModel.getTable() + ",id=" + idColumn.getValue());
     }
 }

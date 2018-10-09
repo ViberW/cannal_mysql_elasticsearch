@@ -140,9 +140,10 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                     //批量导入es中
                     elasticsearchService.batchInsertById(request.getIndex(), request.getType(), mapList);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("处理导入es异常", e);
                 }
             }
+            logger.info("单次县城处理结束");
         });
     }
 

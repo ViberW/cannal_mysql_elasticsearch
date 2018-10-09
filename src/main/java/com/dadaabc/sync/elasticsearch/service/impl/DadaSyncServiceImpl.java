@@ -164,8 +164,6 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                         jsonMap.put(esField, Integer.valueOf(String.valueOf(o)));
                     } else if (o instanceof java.sql.Date) {
                         jsonMap.put(esField, new Date(((java.sql.Date) o).getTime()));
-                    } else if (o instanceof Boolean) {
-                        jsonMap.put(esField, (boolean) o ? 1 : 0);
                     } else {
                         jsonMap.put(esField, o);
                     }

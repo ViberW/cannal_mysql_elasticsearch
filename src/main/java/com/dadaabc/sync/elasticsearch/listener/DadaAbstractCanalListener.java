@@ -61,6 +61,7 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
                 return;
             }
             String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
+            System.out.println("type:  " + column.getMysqlType() + " : " + column.getValue());
             if (StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue()));
             }

@@ -8,10 +8,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author 余海
- * @version 1.0
- * @description 类型转换工具类
- * @create 2018-06-27 下午2:40
+ * @author: veelur
+ * @date: 18-9-25
+ * @Description: {相关描述}
  */
 public class ClazzConverterUtils {
 

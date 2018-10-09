@@ -5,10 +5,9 @@ import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
 /**
- * @author 余海
- * @version 1.0
- * @description json帮助类
- * @create 2018-06-26 下午4:29
+ * @author: veelur
+ * @date: 18-9-25
+ * @Description: {相关描述}
  */
 public class JsonUtils {
     static{

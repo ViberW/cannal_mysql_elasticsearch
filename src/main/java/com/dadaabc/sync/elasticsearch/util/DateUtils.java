@@ -11,10 +11,9 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
- * @author 余海
- * @version 1.0
- * @description 日期帮助类
- * @create 2018-06-26 下午4:24
+ * @author: veelur
+ * @date: 18-9-25
+ * @Description: {相关描述}
  */
 public class DateUtils {
 

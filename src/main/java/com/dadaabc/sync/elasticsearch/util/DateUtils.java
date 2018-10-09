@@ -55,8 +55,8 @@ public class DateUtils {
             return null;
         }
         if (date.length() <= 10) {
-           return strToDate3(date);
-        }else {
+            return strToDate3(date);
+        } else {
             return strToDate(date);
         }
     }
@@ -80,7 +80,7 @@ public class DateUtils {
         try {
             result = new SimpleDateFormat(format).parse(date);
         } catch (ParseException e) {
-            logger.error("时间格式不正确，date=" + date + ", format=" + format + "，失败原因=" + e.getMessage() + ".", e);
+            //logger.error("时间格式不正确，date=" + date + ", format=" + format + "，失败原因=" + e.getMessage() + ".", e);
         }
         return result;
     }

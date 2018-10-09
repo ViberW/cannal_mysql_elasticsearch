@@ -15,10 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -62,10 +62,10 @@ public class DadaSyncServiceImpl implements DadaSyncService {
         String pkStr = mainModel.getPkStr();
         List<Object> pkStrs;
         List<Map<String, Object>> maps;
-        Map<String, Map<String, Object>> mapList;
         int totalCount = 0;
-        ExecutorService cachedThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
+        ExecutorService cachedThreadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
         Object pk = null;
+        Map<String, Map<String, Object>> mapList;
         try {
             do {
                 maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(), start, limit,
@@ -85,6 +85,7 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                     logger.info("mapping根据pkStr获取信息不符合");
                     return false;
                 }
+                maps = parseColumnsToMapList(maps, mainModel);
                 mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
                 poolDeal(cachedThreadPool, models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList()),
                         mapList, pkStrs, request);
@@ -105,28 +106,34 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             List<Map<String, Object>> subMaps;
             boolean oneToMore;
             Object orDefault;
+            Map<String, Object> stringObjectMap;
             for (DataDatabaseTableModel tableModel : models) {
                 oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
                 try {
                     subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
+                    subMaps = parseColumnsToMapList(subMaps, tableModel);
                     if (!CollectionUtils.isEmpty(subMaps)) {
                         subMaps = parseColumnsToMapList(subMaps, tableModel);
                         if (oneToMore) {
                             for (Map<String, Object> subMap : subMaps) {
-                                orDefault = mapList.get(tableModel.getPkStr())
+                                orDefault = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())))
                                         .get(tableModel.getListname());
                                 if (null != orDefault) {
                                     ((List<Map<String, Object>>) orDefault).add(subMap);
                                 } else {
-                                    mapList.get(tableModel.getPkStr()).put(tableModel.getListname(),
-                                            new ArrayList<Map<String, Object>>() {{
-                                                add(subMap);
-                                            }});
+                                    ArrayList<Map<String, Object>> maps = new ArrayList<>();
+                                    maps.add(subMap);
+                                    mapList.get(String.valueOf(subMap.get(tableModel.getPkStr()))).put(tableModel.getListname(), maps);
                                 }
                             }
                         } else {
                             for (Map<String, Object> subMap : subMaps) {
-                                mapList.get(tableModel.getPkStr()).putAll(subMap);
+                                if (null != subMap) {
+                                    stringObjectMap = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())));
+                                    if (null != stringObjectMap) {
+                                        stringObjectMap.putAll(subMap);
+                                    }
+                                }
                             }
                         }
                     }
@@ -149,8 +156,19 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             map.forEach((s, o) -> {
                 String esField = convertColumnAndEsName(s, dbModel);
                 if (StringUtils.isNotEmpty(esField)) {
-                    jsonMap.put(esField, null == o ? null
-                            : mappingService.getElasticsearchTypeObject(o.getClass().getTypeName(), String.valueOf(o)));
+                    if (o instanceof Timestamp) {
+                        jsonMap.put(esField, new Date(((Timestamp) o).getTime()));
+                    } else if (o instanceof BigDecimal) {
+                        jsonMap.put(esField, Double.valueOf(String.valueOf(o)));
+                    } else if (o instanceof BigInteger) {
+                        jsonMap.put(esField, Integer.valueOf(String.valueOf(o)));
+                    } else if (o instanceof java.sql.Date) {
+                        jsonMap.put(esField, new Date(((java.sql.Date) o).getTime()));
+                    } else if (o instanceof Boolean) {
+                        jsonMap.put(esField, (boolean) o ? 1 : 0);
+                    } else {
+                        jsonMap.put(esField, o);
+                    }
                 }
             });
             if (!CollectionUtils.isEmpty(jsonMap)) {

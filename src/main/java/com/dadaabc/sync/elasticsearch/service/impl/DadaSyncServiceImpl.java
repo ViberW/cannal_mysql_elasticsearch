@@ -63,7 +63,7 @@ public class DadaSyncServiceImpl implements DadaSyncService {
         List<Object> pkStrs;
         List<Map<String, Object>> maps;
         int totalCount = 0;
-        ExecutorService cachedThreadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
+        ExecutorService cachedThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
         Object pk = null;
         Map<String, Map<String, Object>> mapList;
         try {

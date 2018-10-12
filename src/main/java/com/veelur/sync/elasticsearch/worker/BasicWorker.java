@@ -26,14 +26,12 @@ public class BasicWorker {
     @Value("${zookeeper.sessionTime:3000}")
     private Integer zookeeperSessionTime;
 
-    @Value("${zookeeper.path:/}")
-    private String zookeeperPath;
-
     @Value("${server.port:80}")
     private int serverPort;
+    // 获取对应的zookeeper的路径: /com/veelur/sync/elasticsearch/worker
+    private String zookeeperPath = "/" + getClass().getPackage().getName().replace(".", "/");
 
     public boolean checkZookeeper() {
-
         if (null == zooKeeperDataWatcher) {
             synchronized (ZooKeeperDataWatcher.class) {
                 if (null == zooKeeperDataWatcher) {

@@ -32,18 +32,31 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
 
     @Resource
     private CanalConnector canalConnector;
+    /**
+     * 定时执行处理时间
+     */
+    private static final long schduleTime = 100;
+    /**
+     * schdule保证1分钟后执行
+     */
+    private int schduleCount = (int) (1000 / schduleTime);
+    /**
+     * 初始应用标志
+     */
+    private int delaySign = 0;
 
     private boolean zkPathNode = false;
 
-    @Scheduled(fixedDelay = 100)
+    @Scheduled(fixedDelay = schduleTime)
     @Override
     public void run() {
         if (!zkPathNode) {
-            if (checkZookeeper()) {
+            if ((delaySign % schduleCount != 0) || !checkZookeeper()) {
+                //延迟1分钟执行
+                delaySign++;
                 return;
-            } else {
-                zkPathNode = true;
             }
+            zkPathNode = true;
         }
         try {
             int batchSize = 1000;

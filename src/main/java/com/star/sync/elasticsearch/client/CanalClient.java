@@ -3,6 +3,8 @@ package com.star.sync.elasticsearch.client;
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
 import com.google.common.collect.Lists;
+import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -34,12 +36,20 @@ public class CanalClient implements DisposableBean {
     private String canalPassword;
     @Value("${canal.zkServers}")
     private String canalZkServers;
+
     @Bean
-    public CanalConnector getCanalConnector() {
-        /*canalConnector = CanalConnectors.newClusterConnector(
-                Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))),
-                canalDestination, canalUsername, canalPassword);*/
-        canalConnector =  CanalConnectors.newClusterConnector(canalZkServers,canalDestination,canalUsername,canalPassword);
+    public CanalConnector getCanalConnector() throws InfoNotRightException {
+        if (StringUtils.isNotBlank(canalZkServers)) {
+            logger.info("canal客户端准备连接zookeeper...");
+            canalConnector = CanalConnectors.newClusterConnector(canalZkServers, canalDestination, canalUsername, canalPassword);
+        } else if (StringUtils.isNotBlank(canalHost) && StringUtils.isNotBlank(canalPort)) {
+            logger.info("canal客户端准备连接canal...");
+            canalConnector = CanalConnectors.newClusterConnector(
+                    Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))),
+                    canalDestination, canalUsername, canalPassword);
+        } else {
+            throw new InfoNotRightException("canal连接信息不符合");
+        }
         canalConnector.connect();
         // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
         canalConnector.subscribe();

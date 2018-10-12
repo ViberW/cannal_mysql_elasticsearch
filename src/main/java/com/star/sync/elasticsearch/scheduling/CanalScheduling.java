@@ -8,6 +8,7 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.veelur.sync.elasticsearch.event.DadaDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.DadaInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.DadaUpdateCanalEvent;
+import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -25,7 +26,7 @@ import java.util.List;
  * @since 2017-08-26 22:44:00
  */
 @Component
-public class CanalScheduling implements Runnable, ApplicationContextAware {
+public class CanalScheduling extends BasicWorker implements Runnable, ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(CanalScheduling.class);
     private ApplicationContext applicationContext;
 
@@ -35,6 +36,9 @@ public class CanalScheduling implements Runnable, ApplicationContextAware {
     @Scheduled(fixedDelay = 100)
     @Override
     public void run() {
+        if (checkZookeeper()) {
+            return;
+        }
         try {
             int batchSize = 1000;
 //            Message message = connector.get(batchSize);

@@ -32,10 +32,14 @@ public class CanalClient implements DisposableBean {
     private String canalUsername;
     @Value("${canal.password}")
     private String canalPassword;
-
+    @Value("${canal.zkServers}")
+    private String canalZkServers;
     @Bean
     public CanalConnector getCanalConnector() {
-        canalConnector = CanalConnectors.newClusterConnector(Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))), canalDestination, canalUsername, canalPassword);
+        /*canalConnector = CanalConnectors.newClusterConnector(
+                Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))),
+                canalDestination, canalUsername, canalPassword);*/
+        canalConnector =  CanalConnectors.newClusterConnector(canalZkServers,canalDestination,canalUsername,canalPassword);
         canalConnector.connect();
         // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
         canalConnector.subscribe();

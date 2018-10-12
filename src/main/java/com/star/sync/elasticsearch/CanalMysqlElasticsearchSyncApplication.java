@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class CanalMysqlElasticsearchSyncApplication {
 
     public static void main(String[] args) {
+        //适用于初始版本 基于starcwang/canal_mysql_elasticsearch_sync重新定义的处理模块
         SpringApplication.run(CanalMysqlElasticsearchSyncApplication.class, args);
     }
 

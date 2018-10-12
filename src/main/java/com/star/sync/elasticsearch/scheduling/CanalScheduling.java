@@ -51,9 +51,12 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     @Override
     public void run() {
         if (!zkPathNode) {
-            if ((delaySign % schduleCount != 0) || !checkZookeeper()) {
+            if (delaySign % schduleCount != 0) {
                 //延迟1分钟执行
                 delaySign++;
+                return;
+            } else if (!checkZookeeper()) {
+                delaySign = 1;
                 return;
             }
             zkPathNode = true;

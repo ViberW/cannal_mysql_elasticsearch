@@ -25,7 +25,6 @@ public class DadaSyncController {
     @Autowired
     private DadaSyncService syncService;
 
-
     /**
      * @param request
      * @return

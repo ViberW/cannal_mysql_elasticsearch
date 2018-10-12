@@ -1,11 +1,9 @@
 package com.veelur.sync.elasticsearch.worker;
 
-import com.veelur.sync.elasticsearch.config.BasicProps;
 import com.veelur.sync.elasticsearch.config.zookeeper.ZooKeeperDataWatcher;
 import com.veelur.sync.elasticsearch.util.IpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +20,14 @@ public class BasicWorker {
 
     private static ZooKeeperDataWatcher zooKeeperDataWatcher;
 
-    @Autowired
-    private BasicProps basicProps;
+    @Value("${zookeeper.server:localhost:2181}")
+    private String zookeeperServer;
+
+    @Value("${zookeeper.sessionTime:3000}")
+    private Integer zookeeperSessionTime;
+
+    @Value("${zookeeper.path:/}")
+    private String zookeeperPath;
 
     @Value("${server.port:80}")
     private int serverPort;
@@ -34,8 +38,8 @@ public class BasicWorker {
             synchronized (ZooKeeperDataWatcher.class) {
                 if (null == zooKeeperDataWatcher) {
                     try {
-                        zooKeeperDataWatcher = new ZooKeeperDataWatcher(basicProps.getZookeeperServer(),
-                                basicProps.getZookeeperSessionTime(), basicProps.getZookeeperPath(),
+                        zooKeeperDataWatcher = new ZooKeeperDataWatcher(zookeeperServer,
+                                zookeeperSessionTime, zookeeperPath,
                                 IpUtils.getServerIpAddress(), this.serverPort);
                     } catch (IOException e) {
                         logger.error(e.getMessage(), e);
@@ -49,7 +53,7 @@ public class BasicWorker {
         }
         // 判断是否需要本机运行
         if (!zooKeeperDataWatcher.getIsThisRun()) {
-            String info = zooKeeperDataWatcher.getData(basicProps.getZookeeperPath());
+            String info = zooKeeperDataWatcher.getData(zookeeperPath);
             logger.info("其他服务器正在运行: " + info);
             return false;
         }

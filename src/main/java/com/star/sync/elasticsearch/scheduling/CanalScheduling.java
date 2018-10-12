@@ -33,11 +33,17 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     @Resource
     private CanalConnector canalConnector;
 
+    private boolean zkPathNode = false;
+
     @Scheduled(fixedDelay = 100)
     @Override
     public void run() {
-        if (checkZookeeper()) {
-            return;
+        if (!zkPathNode) {
+            if (checkZookeeper()) {
+                return;
+            } else {
+                zkPathNode = true;
+            }
         }
         try {
             int batchSize = 1000;

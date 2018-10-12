@@ -34,19 +34,19 @@ public class CanalClient implements DisposableBean {
     private String canalUsername;
     @Value("${canal.password}")
     private String canalPassword;
-    @Value("${zookeeper.server:localhost:2181}")
+    @Value("${zookeeper.server}")
     private String canalZkServers;
 
     @Bean
     public CanalConnector getCanalConnector() throws InfoNotRightException {
-        if (StringUtils.isNotBlank(canalZkServers)) {
-            logger.info("canal客户端准备连接zookeeper...");
-            canalConnector = CanalConnectors.newClusterConnector(canalZkServers, canalDestination, canalUsername, canalPassword);
-        } else if (StringUtils.isNotBlank(canalHost) && StringUtils.isNotBlank(canalPort)) {
+        if (StringUtils.isNotBlank(canalHost) && StringUtils.isNotBlank(canalPort)) {
             logger.info("canal客户端准备连接canal...");
             canalConnector = CanalConnectors.newClusterConnector(
                     Lists.newArrayList(new InetSocketAddress(canalHost, Integer.valueOf(canalPort))),
                     canalDestination, canalUsername, canalPassword);
+        } else if (StringUtils.isNotBlank(canalZkServers)) {
+            logger.info("canal客户端准备连接zookeeper...");
+            canalConnector = CanalConnectors.newClusterConnector(canalZkServers, canalDestination, canalUsername, canalPassword);
         } else {
             throw new InfoNotRightException("canal连接信息不符合");
         }

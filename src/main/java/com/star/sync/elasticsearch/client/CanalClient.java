@@ -34,7 +34,7 @@ public class CanalClient implements DisposableBean {
     private String canalUsername;
     @Value("${canal.password}")
     private String canalPassword;
-    @Value("${zookeeper.server}")
+    @Value("${canal.zookeeper.server}")
     private String canalZkServers;
 
     @Bean

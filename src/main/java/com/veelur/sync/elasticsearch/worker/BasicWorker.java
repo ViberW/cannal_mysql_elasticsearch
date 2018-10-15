@@ -2,6 +2,7 @@ package com.veelur.sync.elasticsearch.worker;
 
 import com.veelur.sync.elasticsearch.config.zookeeper.ZooKeeperDataWatcher;
 import com.veelur.sync.elasticsearch.util.IpUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,18 +21,22 @@ public class BasicWorker {
 
     private static ZooKeeperDataWatcher zooKeeperDataWatcher;
 
-    @Value("${zookeeper.server:localhost:2181}")
+    @Value("${canal.zookeeper.server:localhost:2181}")
     private String zookeeperServer;
 
-    @Value("${zookeeper.sessionTime:3000}")
+    @Value("${canal.zookeeper.sessionTime:3000}")
     private Integer zookeeperSessionTime;
 
     @Value("${server.port:80}")
     private int serverPort;
-    // 获取对应的zookeeper的路径: /com/veelur/sync/elasticsearch/worker
-    private String zookeeperPath = "/" + getClass().getPackage().getName().replace(".", "/");
+    // 获取对应的zookeeper的路径: /com/veelur/sync/elasticsearch/worker/running
+    @Value("${canal.zookeeper.path}")
+    private String zookeeperPath;
 
     public boolean checkZookeeper() {
+        if (StringUtils.isBlank(zookeeperPath)) {
+            zookeeperPath = "/" + getClass().getPackage().getName().replace(".", "/") + "/running";
+        }
         if (null == zooKeeperDataWatcher) {
             synchronized (ZooKeeperDataWatcher.class) {
                 if (null == zooKeeperDataWatcher) {

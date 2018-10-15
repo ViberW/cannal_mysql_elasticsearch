@@ -12,6 +12,7 @@ import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,6 +33,9 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
 
     @Resource
     private CanalConnector canalConnector;
+
+    @Value("${canal.batch.size:1000}")
+    private int  canalBatchSize;
     /**
      * 定时执行处理时间
      */
@@ -62,9 +66,8 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
             zkPathNode = true;
         }
         try {
-            int batchSize = 1000;
 //            Message message = connector.get(batchSize);
-            Message message = canalConnector.getWithoutAck(batchSize);
+            Message message = canalConnector.getWithoutAck(canalBatchSize);
             long batchId = message.getId();
             try {
                 List<Entry> entries = message.getEntries();

@@ -34,7 +34,7 @@ public class DadaSyncController {
     public Response<Boolean> syncTable(@Validated SyncByIndexRequest request, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             logger.info("全量同步信息错误" + bindingResult.getFieldErrors().toString());
-            return Response.fail(-1, bindingResult.getFieldErrors().toString());
+            return Response.fail(2, bindingResult.getFieldErrors().toString());
         }
         logger.info("request_info: " + JsonUtil.toJson(request));
         Response<Boolean> response = Response.success(syncService.syncByIndex(request));

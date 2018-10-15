@@ -24,9 +24,9 @@ public class CanalClient implements DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(CanalClient.class);
     private CanalConnector canalConnector;
 
-    @Value("${canal.host}")
+    @Value("${canal.host:}")
     private String canalHost;
-    @Value("${canal.port}")
+    @Value("${canal.port:}")
     private String canalPort;
     @Value("${canal.destination}")
     private String canalDestination;

@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.star.sync</groupId>
-    <artifactId>canal-mysql-elasticsearch-sync</artifactId>
-    <version>1.0.4</version>
+    <groupId>com.veelur.sync</groupId>
+    <artifactId>canal-mysql-elasticsearch</artifactId>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
-    <name>canal-mysql-elasticsearch-sync</name>
-    <description>基于canal的mysql和elasticsearch实时同步方案，支持增量同步和全量同步</description>
+    <name>canal-mysql-elasticsearch</name>
+    <description>基于canal的mysql和elasticsearch实时同步方案，支持增量同步和全量同步及多表对应设置</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

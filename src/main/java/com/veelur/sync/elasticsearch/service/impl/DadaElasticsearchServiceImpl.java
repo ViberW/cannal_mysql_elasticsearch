@@ -68,9 +68,8 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
     public void updateList(String index, String type, String id,
                            Map<String, Object> dataMap, String listName, String mainKey) {
         try {
-            Object mainObj = dataMap.get(mainKey);
-            String mainValue;
-            if (null == mainObj || StringUtils.isEmpty(mainValue = mainObj.toString())) {
+            Object mainValue = dataMap.get(mainKey);
+            if (null == mainValue) {
                 logger.error("mainkey错误");
                 return;
             }
@@ -85,6 +84,32 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
                     "if(ctx._source.containsKey(params.field))" +
                             "{ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');"
                             + "ctx._source." + listName + ".add(params.message)}" +
+                            "else{ctx._source." + listName + "=[params.message]}",
+                    params));
+            transportClient.update(updateRequest).get();
+        } catch (InterruptedException e) {
+            logger.error("更新数据异常", e);
+        } catch (ExecutionException e) {
+            logger.error("更新数据异常", e);
+        } catch (IOException e) {
+            logger.error("更新数据异常", e);
+        }
+    }
+
+    @Override
+    public void insertList(String index, String type, String id,
+                           Map<String, Object> dataMap, String listName) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("message", dataMap);
+            params.put("field", listName);
+            IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
+                    .startObject().array(listName, dataMap).endObject());
+            UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
+            updateRequest.script(new Script(ScriptType.INLINE,
+                    Script.DEFAULT_SCRIPT_LANG,
+                    "if(ctx._source.containsKey(params.field))" +
+                            "{ctx._source." + listName + ".add(params.message)}" +
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));
             transportClient.update(updateRequest).get();

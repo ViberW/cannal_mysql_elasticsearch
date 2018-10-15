@@ -46,8 +46,8 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中
-            elasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
-                    dataMap, dbModel.getListname(), dbModel.getMainKey());
+            elasticsearchService.insertList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    dataMap, dbModel.getListname());
         } else {
             elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

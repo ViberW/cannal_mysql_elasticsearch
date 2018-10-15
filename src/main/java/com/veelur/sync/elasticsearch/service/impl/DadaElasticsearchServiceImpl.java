@@ -82,7 +82,7 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
             updateRequest.script(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
-                            "{ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == '" + mainValue + "');"
+                            "{ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");"
                             + "ctx._source." + listName + ".add(params.message)}" +
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));

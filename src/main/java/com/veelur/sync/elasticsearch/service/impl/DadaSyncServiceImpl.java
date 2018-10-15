@@ -11,6 +11,8 @@ import com.star.sync.elasticsearch.dao.BaseDao;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
  * @Description: {相关描述}
  */
 @Service
-public class DadaSyncServiceImpl implements DadaSyncService {
+public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(DadaSyncServiceImpl.class);
 
     @Autowired
@@ -40,6 +42,20 @@ public class DadaSyncServiceImpl implements DadaSyncService {
     @Autowired
     private DadaElasticsearchService elasticsearchService;
 
+    private ExecutorService cachedThreadPool;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        cachedThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (cachedThreadPool != null) {
+            cachedThreadPool.shutdown();
+        }
+    }
+
     @Override
     public boolean syncByIndex(SyncByIndexRequest request) {
         //根据index获取信息
@@ -50,8 +66,6 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             return false;
         }
         //根据对应的多个database获取数据
-        int start = 0;
-        int limit = request.getLimit();
         DataDatabaseTableModel mainModel = models.stream().filter(column ->
                 null != column.getMain() && MainTypeEnum.MAIN.getCode().equals(column.getMain()))
                 .findFirst().orElse(null);
@@ -59,23 +73,62 @@ public class DadaSyncServiceImpl implements DadaSyncService {
             logger.info("当前mapping信息没有main数据");
             return false;
         }
+        List<DataDatabaseTableModel> insetDataTables = models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList());
         String pkStr = mainModel.getPkStr();
-        List<Object> pkStrs;
-        List<Map<String, Object>> maps;
-        int totalCount = 0;
-        ExecutorService cachedThreadPool = new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
-        Object pk = null;
-        Map<String, Map<String, Object>> mapList;
-        try {
+        List<Map<String, Object>> maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
+                0, request.getLimit(),
+                mainModel.getPkStr(), null,
+                request.getOrderSign(), request.getStart(), request.getEnd());
+        if (CollectionUtils.isEmpty(maps)) {
+            logger.info("获取信息完毕");
+            return true;
+        }
+        //查询其他的附表
+        List<Object> pkStrs = new ArrayList<>();
+        for (Map<String, Object> map : maps) {
+            pkStrs.add(map.get(pkStr));
+        }
+        if (CollectionUtils.isEmpty(pkStrs) || maps.size() != pkStrs.size()) {
+            logger.info("mapping根据pkStr获取信息不符合");
+            return false;
+        }
+        maps = parseColumnsToMapList(maps, mainModel);
+        Map<String, Map<String, Object>> mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
+        dealToEs(insetDataTables, mapList, pkStrs, request);
+        logger.info("导入es信息第一次成功");
+        poolDeals(cachedThreadPool, mainModel, request, insetDataTables, maps.get(maps.size() - 1));
+        return true;
+    }
+
+    private void poolDeals(ExecutorService cachedThreadPool, DataDatabaseTableModel mainModel,
+                           SyncByIndexRequest request, List<DataDatabaseTableModel> insetDataTables,
+                           Map<String, Object> firstMap) {
+        cachedThreadPool.execute(() -> {
+            int count = 1;
+            int _start = 0;
+            int _limit = request.getLimit();
+            Object _pk = null == firstMap ? null : firstMap.get(mainModel.getPkStr());
+            Object _oldPk = _pk;
+            String pkStr = mainModel.getPkStr();
+            Map<String, Map<String, Object>> mapList;
+            List<Map<String, Object>> maps;
+            List<Object> pkStrs;
             do {
-                maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(), start, limit,
-                        mainModel.getPkStr(), pk,
+                maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
+                        _start, _limit,
+                        mainModel.getPkStr(), _pk,
                         request.getOrderSign(), request.getStart(), request.getEnd());
                 if (CollectionUtils.isEmpty(maps)) {
                     logger.info("获取信息完毕");
-                    break;
+                    return;
                 }
-                pk = maps.get(maps.size() - 1).get(mainModel.getPkStr());
+                _pk = maps.get(maps.size() - 1).get(mainModel.getPkStr());
+                if (_pk.equals(_oldPk)) {
+                    _start += _limit;
+                } else {
+                    _start = 0;
+                    _oldPk = _pk;
+                }
                 //查询其他的附表
                 pkStrs = new ArrayList<>();
                 for (Map<String, Object> map : maps) {
@@ -83,68 +136,61 @@ public class DadaSyncServiceImpl implements DadaSyncService {
                 }
                 if (CollectionUtils.isEmpty(pkStrs) || maps.size() != pkStrs.size()) {
                     logger.info("mapping根据pkStr获取信息不符合");
-                    return false;
+                    return;
                 }
                 maps = parseColumnsToMapList(maps, mainModel);
                 mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
-                poolDeal(cachedThreadPool, models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList()),
-                        mapList, pkStrs, request);
+                dealToEs(insetDataTables, mapList, pkStrs, request);
+                count++;
+            } while (_limit != maps.size());
+            logger.info("导入es信息成功,totalCount: {}", count);
+        });
 
-                totalCount++;
-                logger.info("导入es信息单词循环成功");
-            } while (true);
-            logger.info("全量同步es数据信息,totalCount:" + totalCount);
-            return true;
-        } finally {
-            cachedThreadPool.shutdown();
-        }
     }
 
-    private void poolDeal(ExecutorService pool, List<DataDatabaseTableModel> models,
+    private void dealToEs(List<DataDatabaseTableModel> models,
                           Map<String, Map<String, Object>> mapList, List<Object> pkStrs, SyncByIndexRequest request) {
-        pool.submit(() -> {
-            List<Map<String, Object>> subMaps;
-            boolean oneToMore;
-            Object orDefault;
-            Map<String, Object> stringObjectMap;
-            for (DataDatabaseTableModel tableModel : models) {
-                oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
-                try {
-                    subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
+        List<Map<String, Object>> subMaps;
+        boolean oneToMore;
+        Object orDefault;
+        Map<String, Object> stringObjectMap;
+        for (DataDatabaseTableModel tableModel : models) {
+            oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
+            try {
+                subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
+                subMaps = parseColumnsToMapList(subMaps, tableModel);
+                if (!CollectionUtils.isEmpty(subMaps)) {
                     subMaps = parseColumnsToMapList(subMaps, tableModel);
-                    if (!CollectionUtils.isEmpty(subMaps)) {
-                        subMaps = parseColumnsToMapList(subMaps, tableModel);
-                        if (oneToMore) {
-                            for (Map<String, Object> subMap : subMaps) {
-                                orDefault = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())))
-                                        .get(tableModel.getListname());
-                                if (null != orDefault) {
-                                    ((List<Map<String, Object>>) orDefault).add(subMap);
-                                } else {
-                                    ArrayList<Map<String, Object>> maps = new ArrayList<>();
-                                    maps.add(subMap);
-                                    mapList.get(String.valueOf(subMap.get(tableModel.getPkStr()))).put(tableModel.getListname(), maps);
-                                }
+                    if (oneToMore) {
+                        for (Map<String, Object> subMap : subMaps) {
+                            orDefault = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())))
+                                    .get(tableModel.getListname());
+                            if (null != orDefault) {
+                                ((List<Map<String, Object>>) orDefault).add(subMap);
+                            } else {
+                                ArrayList<Map<String, Object>> maps = new ArrayList<>();
+                                maps.add(subMap);
+                                mapList.get(String.valueOf(subMap.get(tableModel.getPkStr()))).put(tableModel.getListname(), maps);
                             }
-                        } else {
-                            for (Map<String, Object> subMap : subMaps) {
-                                if (null != subMap) {
-                                    stringObjectMap = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())));
-                                    if (null != stringObjectMap) {
-                                        stringObjectMap.putAll(subMap);
-                                    }
+                        }
+                    } else {
+                        for (Map<String, Object> subMap : subMaps) {
+                            if (null != subMap) {
+                                stringObjectMap = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())));
+                                if (null != stringObjectMap) {
+                                    stringObjectMap.putAll(subMap);
                                 }
                             }
                         }
                     }
-                    //批量导入es中
-                    elasticsearchService.batchInsertById(request.getIndex(), request.getType(), mapList);
-                } catch (Exception e) {
-                    logger.error("处理导入es异常", e);
                 }
+                //批量导入es中
+                elasticsearchService.batchInsertById(request.getIndex(), request.getType(), mapList);
+            } catch (Exception e) {
+                logger.error("处理导入es异常", e);
             }
-            logger.info("单次县城处理结束");
-        });
+        }
+        logger.info("单次县城处理结束");
     }
 
     private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, DataDatabaseTableModel dbModel) {

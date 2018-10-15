@@ -35,7 +35,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     private CanalConnector canalConnector;
 
     @Value("${canal.batch.size:1000}")
-    private int  canalBatchSize;
+    private int canalBatchSize;
     /**
      * 定时执行处理时间
      */
@@ -43,7 +43,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     /**
      * schdule保证1分钟后执行
      */
-    private int schduleCount = (int) (1000 / schduleTime);
+    private int schduleCount = (int) (1000 * 10 / schduleTime);
     /**
      * 初始应用标志
      */

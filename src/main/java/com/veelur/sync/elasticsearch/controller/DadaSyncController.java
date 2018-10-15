@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Description: {相关描述}
  */
 @RestController
-@RequestMapping("/dada/sync")
+@RequestMapping("/veelur/sync")
 public class DadaSyncController {
     private static final Logger logger = LoggerFactory.getLogger(DadaSyncController.class);
 

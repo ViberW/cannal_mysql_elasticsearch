@@ -41,7 +41,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
      */
     private static final long schduleTime = 100;
     /**
-     * schdule保证1分钟后执行
+     * schdule保证10秒后执行
      */
     private int schduleCount = (int) (1000 * 10 / schduleTime);
     /**

@@ -19,6 +19,11 @@ public class SyncByIndexRequest {
     private String start;
     @NotBlank(message = "end不能为空")
     private String end;
+    /**
+     * 可选值:string,long,double,date(时间格式满足:yyyy-MM-dd HH:mm:ss)
+     */
+    @NotBlank(message = "orderType不能为空")
+    private String orderType;
 
     private Integer limit = 200;
 
@@ -62,6 +67,14 @@ public class SyncByIndexRequest {
         this.end = end;
     }
 
+    public String getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(String orderType) {
+        this.orderType = orderType;
+    }
+
     public Integer getLimit() {
         return limit;
     }
@@ -78,6 +91,7 @@ public class SyncByIndexRequest {
                 ", orderSign='" + orderSign + '\'' +
                 ", start='" + start + '\'' +
                 ", end='" + end + '\'' +
+                ", orderType='" + orderType + '\'' +
                 ", limit=" + limit +
                 '}';
     }

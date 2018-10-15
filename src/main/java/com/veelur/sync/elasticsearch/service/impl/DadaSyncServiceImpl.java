@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.service.impl;
 
+import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.model.DadaDatabaseModel;
 import com.veelur.sync.elasticsearch.model.DataDatabaseTableModel;
@@ -8,6 +9,7 @@ import com.veelur.sync.elasticsearch.service.DadaElasticsearchService;
 import com.veelur.sync.elasticsearch.service.DadaMappingService;
 import com.veelur.sync.elasticsearch.service.DadaSyncService;
 import com.star.sync.elasticsearch.dao.BaseDao;
+import com.veelur.sync.elasticsearch.util.DateUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,12 +75,14 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
             logger.info("当前mapping信息没有main数据");
             return false;
         }
+        Object orderStart = convertParam(request.getStart(), request.getOrderType());
+        Object orderEnd = convertParam(request.getEnd(), request.getOrderType());
         List<DataDatabaseTableModel> insetDataTables = models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList());
         String pkStr = mainModel.getPkStr();
         List<Map<String, Object>> maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
                 0, request.getLimit(),
                 mainModel.getPkStr(), null,
-                request.getOrderSign(), request.getStart(), request.getEnd());
+                request.getOrderSign(), orderStart, orderEnd);
         if (CollectionUtils.isEmpty(maps)) {
             logger.info("获取信息完毕");
             return true;
@@ -96,12 +100,31 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
         Map<String, Map<String, Object>> mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
         dealToEs(insetDataTables, mapList, pkStrs, request);
         logger.info("导入es信息第一次成功");
-        poolDeals(cachedThreadPool, mainModel, request, insetDataTables, maps.get(maps.size() - 1));
+        poolDeals(cachedThreadPool, mainModel, request, insetDataTables, orderStart, orderEnd, maps.get(maps.size() - 1));
         return true;
+    }
+
+    private Object convertParam(String param, String orderType) {
+        if (null != param && null != orderType) {
+            switch (orderType) {
+                case BaseConstants.TYPE_STRING:
+                    return param;
+                case BaseConstants.TYPE_LONG:
+                    return Long.valueOf(param);
+                case BaseConstants.TYPE_DOUBLE:
+                    return Double.valueOf(param);
+                case BaseConstants.TYPE_DATE:
+                    return DateUtils.strToDate(param);
+                default:
+                    return null;
+            }
+        }
+        return null;
     }
 
     private void poolDeals(ExecutorService cachedThreadPool, DataDatabaseTableModel mainModel,
                            SyncByIndexRequest request, List<DataDatabaseTableModel> insetDataTables,
+                           Object orderStart, Object orderEnd,
                            Map<String, Object> firstMap) {
         cachedThreadPool.execute(() -> {
             int count = 1;
@@ -117,7 +140,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
                 maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
                         _start, _limit,
                         mainModel.getPkStr(), _pk,
-                        request.getOrderSign(), request.getStart(), request.getEnd());
+                        request.getOrderSign(), orderStart, orderEnd);
                 if (CollectionUtils.isEmpty(maps)) {
                     logger.info("获取信息完毕");
                     return;

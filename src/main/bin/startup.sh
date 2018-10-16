@@ -71,8 +71,8 @@ else
 fi
 
 JAVA_OPTS=" $JAVA_OPTS -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=UTF-8"
-CANAL_OPTS="-Dloader.path=$loader_path -DappName=canal_mysql_elasticsearch_sync -Dlogback.configurationFile=$logback_configurationFile"
-MAIN_JAR=$base/lib/canal-mysql-elasticsearch-sync-*.jar
+CANAL_OPTS="-Dloader.path=$loader_path -DappName=canal-mysql-elasticsearch -Dlogback.configurationFile=$logback_configurationFile"
+MAIN_JAR=$base/lib/canal-mysql-elasticsearch-*.jar
 
 if [ -e $sync_conf -a -e $logback_configurationFile ]
 then 

@@ -49,9 +49,9 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
-            <excludes>
+            <!--<excludes>
                 <exclude>junit:junit</exclude>
-            </excludes>
+            </excludes>-->
         </dependencySet>
     </dependencySets>
 </assembly>

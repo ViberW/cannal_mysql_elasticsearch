@@ -6,10 +6,10 @@
 		</encoder>
 	</appender>
 	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>../logs/info.log</file>
+		<file>logs/info.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- rollover daily -->
-			<fileNamePattern>../logs/info.log.%d{yyyy-MM-dd}</fileNamePattern>
+			<fileNamePattern>logs/info/info.log.%d{yyyy-MM-dd}</fileNamePattern>
 			<maxHistory>300</maxHistory>
 		</rollingPolicy>
 		<encoder>

@@ -39,22 +39,22 @@ get_pid() {
 base=`dirname $0`/..
 pidfile=$base/bin/sync.pid
 if [ ! -f "$pidfile" ];then
-	echo "canal_mysql_elasticsearch_sync is not running. exists"
+	echo "canal-mysql-elasticsearch is not running. exists"
 	exit
 fi
 
 pid=`cat $pidfile`
 if [ "$pid" == "" ] ; then
-	pid=`get_pid "appName=canal_mysql_elasticsearch_sync"`
+	pid=`get_pid "appName=canal-mysql-elasticsearch"`
 fi
 
-echo -e "`hostname`: stopping canal_mysql_elasticsearch_sync $pid ... "
+echo -e "`hostname`: stopping canal-mysql-elasticsearch $pid ... "
 kill $pid
 
 LOOPS=0
 while (true); 
 do 
-	gpid=`get_pid "appName=canal_mysql_elasticsearch_sync" "$pid"`
+	gpid=`get_pid "appName=canal-mysql-elasticsearch" "$pid"`
     if [ "$gpid" == "" ] ; then
     	echo "Oook! cost:$LOOPS"
     	`rm $pidfile`

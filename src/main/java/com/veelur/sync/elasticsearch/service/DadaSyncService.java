@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.service;
 
+import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.DataDatabaseTableModel;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 
@@ -10,7 +11,7 @@ import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
  */
 public interface DadaSyncService {
 
-    boolean syncByIndex(SyncByIndexRequest request);
+    boolean syncByIndex(SyncByIndexRequest request) throws InfoNotRightException;
 
     String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel);
 }

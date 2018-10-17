@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.controller;
 
+import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 import com.veelur.sync.elasticsearch.model.response.Response;
 import com.veelur.sync.elasticsearch.service.DadaSyncService;
@@ -31,10 +32,10 @@ public class DadaSyncController {
      * @return
      */
     @RequestMapping("/byIndex")
-    public Response<Boolean> syncTable(@Validated SyncByIndexRequest request, BindingResult bindingResult) {
+    public Response<Boolean> syncTable(@Validated SyncByIndexRequest request, BindingResult bindingResult) throws InfoNotRightException {
         if (bindingResult.hasErrors()) {
             logger.info("全量同步信息错误" + bindingResult.getFieldErrors().toString());
-            return Response.fail(2, bindingResult.getFieldErrors().toString());
+            return Response.fail(1, bindingResult.getFieldErrors().toString());
         }
         logger.info("request_info: " + JsonUtil.toJson(request));
         Response<Boolean> response = Response.success(syncService.syncByIndex(request));

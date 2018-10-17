@@ -77,6 +77,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
                             publishCanalEvent(entry);
                         }
                     });
+                    logger.info("获取binlog信息条数" + entries.size());
                 }
                 canalConnector.ack(batchId);
             } catch (Exception e) {

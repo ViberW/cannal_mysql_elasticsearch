@@ -1,4 +1,4 @@
-dada:
+ver:
   db-es:
     mappings:
       - index: student #索引index,默认以主表作为database作为index

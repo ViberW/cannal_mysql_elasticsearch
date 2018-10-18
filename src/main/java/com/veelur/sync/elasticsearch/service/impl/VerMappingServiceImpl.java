@@ -23,7 +23,7 @@ import java.util.*;
  * @Description: {相关描述}
  */
 @Service
-@ConfigurationProperties(prefix = "dada.db-es")
+@ConfigurationProperties(prefix = "ver.db-es")
 public class VerMappingServiceImpl implements VerMappingService, InitializingBean {
 
     private List<ConvertModel> mappings = new ArrayList<>();

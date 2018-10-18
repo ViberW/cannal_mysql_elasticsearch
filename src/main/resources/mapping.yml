@@ -1,46 +1,46 @@
 ver:
   db-es:
     mappings:
-      - index: student #索引index,默认以主表作为database作为index
-        type: student #索引type,默认以主表表名作为type
+      - index: canal #索引index,默认以主表作为database作为index
+        type: canal #索引type,默认以主表表名作为type
         dbs:
-          - database: infos  #数据库名
-            table: student #表名
+          - database: database1  #数据库名
+            table: table1 #表名
             include:  #包含字段,默认全部
             exclude:         #不转换字段
             pkstr: id      #作为索引的id的对应字段
             main: 1          #表类型 1-主表 2-1对1表 3-1对n表
             listkv:
             convert: {}  #需要转换的字段 字段name转换为names
-          - database: infos
-            table: student_extend
-            include: s_last_bank,s_sell_time,can_atrial_num,is_attention,s_old_zhujiao,s_is_border,s_end_date,touch_student,class_time_week,last_active,assessment_level,learn_start_year,is_take_training
+          - database: database1
+            table: table2
+            include: field1,field2,field3
             exclude:
             pkstr: id
             main: 2
             listkv:
-            convert: {s_last_bank: slastbank}
-          - database: infos
-            table: stu_contract
+            convert: {field1: FIELD1}
+          - database: database1
+            table: table3
             include:
             exclude:
             pkstr: sid
             main: 3
-            listkv: 'stu_contract:ID' # 1对n时转化成list的名称及对应主键 默认为表名称:id
+            listkv: 'table3:ID' # 1对n时转化成list的名称及对应主键 默认为表名称:id
             convert: {}
-          - database: infos
-            table: tsr_task
-            include: handler_id,status
+          - database: database1
+            table: table4
+            include: field1,field2
             exclude: id
-            pkstr: student_id
+            pkstr: s_id
             main: 2
             listkv:
             convert: {}
-          - database: infos
-            table: ts_vacate
+          - database: database1
+            table: table5
             include:
             exclude:
             pkstr: uid
             main: 3
-            listkv: 'tsvacate:id' # 1对n时转化成list的名称及对应主键 默认为表名称:id
+            listkv: 'table5:id' # 1对n时转化成list的名称及对应主键 默认为表名称:id
             convert: {}

@@ -42,7 +42,7 @@ public class DadaInsertCanalListener extends DadaAbstractCanalListener<DadaInser
             return;
         }
         //构建元数据map
-        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
+        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, null);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中

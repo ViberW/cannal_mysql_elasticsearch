@@ -20,7 +20,7 @@ public interface DadaElasticsearchService {
     void updateSet(String index, String type, String id, Map<String, Object> dataMap);
 
     void updateList(String index, String type, String id,
-                    Map<String, Object> dataMap, String listName, String mainKey);
+                    Map<String, Object> dataMap, Map<String, Object> updateMap, String listName, String mainKey);
 
     void deleteList(String index, String type, String id,
                     Map<String, Object> dataMap, String listName, String mainKey);

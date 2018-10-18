@@ -271,7 +271,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
                     } else if (o instanceof BigInteger) {
                         jsonMap.put(esField, Integer.valueOf(String.valueOf(o)));
                     } else if (o instanceof java.sql.Date) {
-                        jsonMap.put(esField, new Date(((java.sql.Date) o).getTime()));
+                        jsonMap.put(esField, (Date) o);
                     } else {
                         jsonMap.put(esField, o);
                     }

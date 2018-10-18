@@ -66,7 +66,7 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
 
     @Override
     public void updateList(String index, String type, String id,
-                           Map<String, Object> dataMap, String listName, String mainKey) {
+                           Map<String, Object> dataMap, Map<String, Object> updateMap, String listName, String mainKey) {
         try {
             Object mainValue = dataMap.get(mainKey);
             if (null == mainValue) {
@@ -76,14 +76,16 @@ public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
             Map<String, Object> params = new HashMap<>();
             params.put("message", dataMap);
             params.put("field", listName);
+            params.put("updates", updateMap);
             IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
                     .startObject().array(listName, dataMap).endObject());
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.script(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
-                            "{ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");"
-                            + "ctx._source." + listName + ".add(params.message)}" +
+                            "{Map it= ctx._source." + listName + ".find(item -> item." + mainKey + " == " + mainValue + ");"
+                            + "if(it != null && !it.isEmpty()){it.putAll(params.updates)}" +
+                            "else{ctx._source." + listName + ".add(params.message)}}" +
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));
             transportClient.update(updateRequest).get();

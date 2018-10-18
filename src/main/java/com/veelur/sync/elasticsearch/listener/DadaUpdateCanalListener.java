@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,12 +41,13 @@ public class DadaUpdateCanalListener extends DadaAbstractCanalListener<DadaUpdat
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns);
+        Map<String, Object> updateMap = new HashMap<>();
+        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns,updateMap);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //更新入嵌套数组中
             elasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
-                    dataMap, dbModel.getListname(), dbModel.getMainKey());
+                    dataMap, updateMap,dbModel.getListname(), dbModel.getMainKey());
         } else {
             elasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

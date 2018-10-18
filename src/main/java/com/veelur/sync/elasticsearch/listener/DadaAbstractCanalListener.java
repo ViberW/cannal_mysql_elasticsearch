@@ -54,7 +54,8 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
         change.getRowDatasList().forEach(rowData -> doSync(dbModel, esModel, rowData));
     }
 
-    protected Map<String, Object> parseColumnsToMap(DataDatabaseTableModel dbModel, List<CanalEntry.Column> columns) {
+    protected Map<String, Object> parseColumnsToMap(DataDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
+                                                    Map<String, Object> updateMap) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {
@@ -62,7 +63,11 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
             }
             String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
             if (StringUtils.isNotEmpty(esField)) {
-                jsonMap.put(esField, column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue()));
+                Object value = column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue());
+                jsonMap.put(esField, value);
+                if (null != updateMap && column.getUpdated()) {
+                    updateMap.put(esField, value);
+                }
             }
         });
         return jsonMap;

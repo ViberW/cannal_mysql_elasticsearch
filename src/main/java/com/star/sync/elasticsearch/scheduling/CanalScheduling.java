@@ -64,6 +64,10 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
                 return;
             }
             zkPathNode = true;
+            // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
+            canalConnector.subscribe();
+            // 回滚寻找上次中断的位置
+            canalConnector.rollback();
         }
         try {
 //            Message message = connector.get(batchSize);

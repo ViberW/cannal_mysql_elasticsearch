@@ -7,7 +7,7 @@
 >>>>type: canal #索引type,默认以主表表名作为type 
 >>>>dbs:    
 >>>>>`-` database: canals  #数据库名  
->>>>>able: canal #表名  
+>>>>>table: canal #表名  
 >>>>>include:  #包含字段,默认全部,以逗号分割    
 >>>>>exclude:         #不导入字段,以逗号分隔  
 >>>>>pkstr: id      #作为索引的id的对应字段    

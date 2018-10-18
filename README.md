@@ -12,7 +12,7 @@
 >>>>>exclude:         #不导入字段,以逗号分隔  
 >>>>>pkstr: id      #作为索引的id的对应字段    
 >>>>>main: 1          #表类型 1-主表 2-1对1表 3-1对n表    
->>>>>listkv: 'listA:id' #1对n时转化成list结构时的名称listA及对应主键 默认为表名称:id
+>>>>>listkv: 'listA:id' #1对n时转化成list结构时的名称listA及对应主键 默认为表名称:id  
 >>>>>convert: {fieldA:FIELD1,fieldB:FIELD2}  #需要转换的字段 字段fieldA转换为FIELD1,默认输入{}  
 
 

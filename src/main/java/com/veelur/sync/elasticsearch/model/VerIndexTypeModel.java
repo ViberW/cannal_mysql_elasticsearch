@@ -7,12 +7,12 @@ import com.star.sync.elasticsearch.model.IndexTypeModel;
  * @date: 18-9-21
  * @Description: {相关描述}
  */
-public class DadaIndexTypeModel extends IndexTypeModel {
+public class VerIndexTypeModel extends IndexTypeModel {
 
-    public DadaIndexTypeModel() {
+    public VerIndexTypeModel() {
     }
 
-    public DadaIndexTypeModel(String index, String type) {
+    public VerIndexTypeModel(String index, String type) {
         super(index, type);
     }
 }

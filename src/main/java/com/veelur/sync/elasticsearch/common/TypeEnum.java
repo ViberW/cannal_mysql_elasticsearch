@@ -5,7 +5,7 @@ package com.veelur.sync.elasticsearch.common;
  * @date: 18-9-21
  * @Description: {相关描述}
  */
-public enum DadaTypeEnum {
+public enum TypeEnum {
 
     DATABASE(1, "数据库"), ELASTIC(2, "elasticsearch");
 
@@ -13,7 +13,7 @@ public enum DadaTypeEnum {
 
     private String desc;
 
-    DadaTypeEnum(Integer code, String desc) {
+    TypeEnum(Integer code, String desc) {
         this.code = code;
         this.desc = desc;
     }

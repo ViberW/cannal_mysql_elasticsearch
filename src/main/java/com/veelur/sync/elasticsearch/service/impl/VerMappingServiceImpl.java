@@ -3,7 +3,7 @@ package com.veelur.sync.elasticsearch.service.impl;
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
-import com.veelur.sync.elasticsearch.service.DadaMappingService;
+import com.veelur.sync.elasticsearch.service.VerMappingService;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -24,38 +24,38 @@ import java.util.*;
  */
 @Service
 @ConfigurationProperties(prefix = "dada.db-es")
-public class DadaMappingServiceImpl implements DadaMappingService, InitializingBean {
+public class VerMappingServiceImpl implements VerMappingService, InitializingBean {
 
-    private List<DadaConvertModel> mappings = new ArrayList<>();
+    private List<ConvertModel> mappings = new ArrayList<>();
 
 
-    public List<DadaConvertModel> getMappings() {
+    public List<ConvertModel> getMappings() {
         return mappings;
     }
 
-    public void setMappings(List<DadaConvertModel> mappings) {
+    public void setMappings(List<ConvertModel> mappings) {
         this.mappings = mappings;
     }
 
-    private BiMap<DadaDatabaseModel, DadaIndexTypeModel> dbEsBiMapping;
-    private Map<String, DadaMappingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
-    private BiMap<DataDatabaseTableModel, DadaConnectModel> dbSingleMapping;
+    private BiMap<DatabaseModel, VerIndexTypeModel> dbEsBiMapping;
+    private Map<String, VerMappingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
+    private BiMap<VerDatabaseTableModel, ConnectModel> dbSingleMapping;
 
     @Override
-    public DadaDatabaseModel getDatabaseWithIndexType(String index, String type) {
-        return dbEsBiMapping.inverse().get(new DadaIndexTypeModel(index, type));
+    public DatabaseModel getDatabaseWithIndexType(String index, String type) {
+        return dbEsBiMapping.inverse().get(new VerIndexTypeModel(index, type));
     }
 
     @Override
-    public DadaConnectModel getColumnWithData(String database, String table) {
-        return dbSingleMapping.get(new DataDatabaseTableModel(database, table));
+    public ConnectModel getColumnWithData(String database, String table) {
+        return dbSingleMapping.get(new VerDatabaseTableModel(database, table));
     }
 
     @Override
     public Object getElasticsearchTypeObject(String mysqlType, String data) {
-        Optional<Map.Entry<String, DadaMappingServiceImpl.Converter>> result = mysqlTypeElasticsearchTypeMapping.entrySet()
+        Optional<Map.Entry<String, VerMappingServiceImpl.Converter>> result = mysqlTypeElasticsearchTypeMapping.entrySet()
                 .parallelStream().filter(entry -> mysqlType.toLowerCase().contains(entry.getKey())).findFirst();
-        return (result.isPresent() ? result.get().getValue() : (DadaMappingServiceImpl.Converter) data1 -> data1).convert(data);
+        return (result.isPresent() ? result.get().getValue() : (VerMappingServiceImpl.Converter) data1 -> data1).convert(data);
     }
 
     @Override
@@ -64,27 +64,27 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
         if (CollectionUtils.isEmpty(mappings)) {
             throw new InfoNotRightException("mapping映射为空");
         }
-        DadaDatabaseModel dadaDatabaseModel;
-        DadaIndexTypeModel dadaIndexTypeModel;
-        List<DataDatabaseTableModel> models;
-        DataDatabaseTableModel tableModel;
-        DadaConnectModel dadaConnectModel;
+        DatabaseModel databaseModel;
+        VerIndexTypeModel verIndexTypeModel;
+        List<VerDatabaseTableModel> models;
+        VerDatabaseTableModel tableModel;
+        ConnectModel connectModel;
         String include;
         String exclude;
         String[] split;
         dbSingleMapping = HashBiMap.create();
 
-        for (DadaConvertModel model : mappings) {
+        for (ConvertModel model : mappings) {
             boolean havaMain = false;
-            dadaIndexTypeModel = new DadaIndexTypeModel();
-            dadaIndexTypeModel.setIndex(model.getIndex());
-            dadaIndexTypeModel.setType(model.getType());
+            verIndexTypeModel = new VerIndexTypeModel();
+            verIndexTypeModel.setIndex(model.getIndex());
+            verIndexTypeModel.setType(model.getType());
             //获取数据库
-            dadaDatabaseModel = new DadaDatabaseModel();
-            List<DadaDbConvertModel> dbs = model.getDbs();
+            databaseModel = new DatabaseModel();
+            List<DbConvertModel> dbs = model.getDbs();
             models = new ArrayList<>();
-            for (DadaDbConvertModel dbConvertModel : dbs) {
-                tableModel = new DataDatabaseTableModel();
+            for (DbConvertModel dbConvertModel : dbs) {
+                tableModel = new VerDatabaseTableModel();
                 tableModel.setDatabase(dbConvertModel.getDatabase());
                 tableModel.setTable(dbConvertModel.getTable());
                 tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : MainTypeEnum.MAIN.getCode());
@@ -117,20 +117,20 @@ public class DadaMappingServiceImpl implements DadaMappingService, InitializingB
                 models.add(tableModel);
                 if (MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
                     havaMain = true;
-                    if (StringUtils.isEmpty(dadaIndexTypeModel.getIndex())) {
-                        dadaIndexTypeModel.setIndex(tableModel.getDatabase());
+                    if (StringUtils.isEmpty(verIndexTypeModel.getIndex())) {
+                        verIndexTypeModel.setIndex(tableModel.getDatabase());
                     }
-                    if (StringUtils.isEmpty(dadaIndexTypeModel.getType())) {
-                        dadaIndexTypeModel.setIndex(tableModel.getTable());
+                    if (StringUtils.isEmpty(verIndexTypeModel.getType())) {
+                        verIndexTypeModel.setIndex(tableModel.getTable());
                     }
                 }
-                dadaConnectModel = new DadaConnectModel();
-                dadaConnectModel.setDbModel(tableModel);
-                dadaConnectModel.setEsModel(dadaIndexTypeModel);
-                dbSingleMapping.put(tableModel, dadaConnectModel);
+                connectModel = new ConnectModel();
+                connectModel.setDbModel(tableModel);
+                connectModel.setEsModel(verIndexTypeModel);
+                dbSingleMapping.put(tableModel, connectModel);
             }
-            dadaDatabaseModel.setModels(models);
-            dbEsBiMapping.put(dadaDatabaseModel, dadaIndexTypeModel);
+            databaseModel.setModels(models);
+            dbEsBiMapping.put(databaseModel, verIndexTypeModel);
         }
         mysqlTypeElasticsearchTypeMapping = Maps.newHashMap();
         mysqlTypeElasticsearchTypeMapping.put("char", data -> data);

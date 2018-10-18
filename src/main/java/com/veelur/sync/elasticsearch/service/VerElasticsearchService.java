@@ -7,7 +7,7 @@ import java.util.Map;
  * @date: 18-9-25
  * @Description: {相关描述}
  */
-public interface DadaElasticsearchService {
+public interface VerElasticsearchService {
 
     void updateById(String index, String type, String id, Map<String, Object> dataMap);
 

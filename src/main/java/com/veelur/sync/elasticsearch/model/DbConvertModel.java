@@ -7,7 +7,7 @@ import java.util.Map;
  * @date: 18-9-25
  * @Description: {相关描述}
  */
-public class DadaDbConvertModel {
+public class DbConvertModel {
     private String database;
     private String table;
     private String include;

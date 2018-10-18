@@ -5,9 +5,9 @@ import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
-import com.veelur.sync.elasticsearch.event.DadaDeleteCanalEvent;
-import com.veelur.sync.elasticsearch.event.DadaInsertCanalEvent;
-import com.veelur.sync.elasticsearch.event.DadaUpdateCanalEvent;
+import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
+import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
+import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
 import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,22 +93,22 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
         EventType eventType = entry.getHeader().getEventType();
         switch (eventType) {
             /*case INSERT:
-                applicationContext.publishEvent(new InsertCanalEvent(entry));
+                applicationContext.publishEvent(new VerInsertCanalEvent(entry));
                 break;
             case UPDATE:
-                applicationContext.publishEvent(new UpdateCanalEvent(entry));
+                applicationContext.publishEvent(new VerUpdateCanalEvent(entry));
                 break;
             case DELETE:
-                applicationContext.publishEvent(new DeleteCanalEvent(entry));
+                applicationContext.publishEvent(new VerDeleteCanalEvent(entry));
                 break;*/
             case INSERT:
-                applicationContext.publishEvent(new DadaInsertCanalEvent(entry));
+                applicationContext.publishEvent(new VerInsertCanalEvent(entry));
                 break;
             case UPDATE:
-                applicationContext.publishEvent(new DadaUpdateCanalEvent(entry));
+                applicationContext.publishEvent(new VerUpdateCanalEvent(entry));
                 break;
             case DELETE:
-                applicationContext.publishEvent(new DadaDeleteCanalEvent(entry));
+                applicationContext.publishEvent(new VerDeleteCanalEvent(entry));
                 break;
             default:
                 break;

@@ -1,14 +1,13 @@
 package com.veelur.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.veelur.sync.elasticsearch.model.DadaConnectModel;
-import com.veelur.sync.elasticsearch.model.DadaIndexTypeModel;
-import com.veelur.sync.elasticsearch.model.DataDatabaseTableModel;
-import com.veelur.sync.elasticsearch.service.DadaMappingService;
-import com.veelur.sync.elasticsearch.service.DadaSyncService;
+import com.veelur.sync.elasticsearch.model.ConnectModel;
+import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
+import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
+import com.veelur.sync.elasticsearch.service.VerMappingService;
+import com.veelur.sync.elasticsearch.service.VerSyncService;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.star.sync.elasticsearch.event.CanalEvent;
-import com.star.sync.elasticsearch.listener.AbstractCanalListener;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,25 +23,25 @@ import java.util.Map;
  * @date: 18-9-25
  * @Description: {相关描述}
  */
-public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implements ApplicationListener<EVENT> {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractCanalListener.class);
+public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> implements ApplicationListener<EVENT> {
+    private static final Logger logger = LoggerFactory.getLogger(com.star.sync.elasticsearch.listener.AbstractCanalListener.class);
 
     @Autowired
-    private DadaMappingService mappingService;
+    private VerMappingService verMappingService;
     @Autowired
-    private DadaSyncService dadaSyncService;
+    private VerSyncService verSyncService;
 
     @Override
     public void onApplicationEvent(EVENT event) {
         CanalEntry.Entry entry = event.getEntry();
         String database = entry.getHeader().getSchemaName();
         String table = entry.getHeader().getTableName();
-        DadaConnectModel connectModel = mappingService.getColumnWithData(database, table);
+        ConnectModel connectModel = verMappingService.getColumnWithData(database, table);
         if (connectModel == null) {
             return;
         }
-        DataDatabaseTableModel dbModel = connectModel.getDbModel();
-        DadaIndexTypeModel esModel = connectModel.getEsModel();
+        VerDatabaseTableModel dbModel = connectModel.getDbModel();
+        VerIndexTypeModel esModel = connectModel.getEsModel();
         CanalEntry.RowChange change;
         try {
             change = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -54,16 +53,16 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
         change.getRowDatasList().forEach(rowData -> doSync(dbModel, esModel, rowData));
     }
 
-    protected Map<String, Object> parseColumnsToMap(DataDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
+    protected Map<String, Object> parseColumnsToMap(VerDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
                                                     Map<String, Object> updateMap) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {
                 return;
             }
-            String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
+            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel);
             if (StringUtils.isNotEmpty(esField)) {
-                Object value = column.getIsNull() ? null : mappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue());
+                Object value = column.getIsNull() ? null : verMappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue());
                 jsonMap.put(esField, value);
                 if (null != updateMap && column.getUpdated()) {
                     updateMap.put(esField, value);
@@ -73,14 +72,14 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
         return jsonMap;
     }
 
-    protected Map<String, Object> parseColumnsToNullMap(DataDatabaseTableModel dbModel,
+    protected Map<String, Object> parseColumnsToNullMap(VerDatabaseTableModel dbModel,
                                                         List<CanalEntry.Column> columns, String primaryKey) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {
                 return;
             }
-            String esField = dadaSyncService.convertColumnAndEsName(column.getName(), dbModel);
+            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel);
             if (!primaryKey.equals(column.getName()) && StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, null);
             }
@@ -97,5 +96,5 @@ public abstract class DadaAbstractCanalListener<EVENT extends CanalEvent> implem
         return null;
     }
 
-    protected abstract void doSync(DataDatabaseTableModel dbModel, DadaIndexTypeModel esModel, CanalEntry.RowData rowData);
+    protected abstract void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, CanalEntry.RowData rowData);
 }

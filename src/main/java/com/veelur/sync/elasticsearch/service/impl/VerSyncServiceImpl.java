@@ -4,13 +4,13 @@ import com.star.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
-import com.veelur.sync.elasticsearch.model.DadaDatabaseModel;
-import com.veelur.sync.elasticsearch.model.DataDatabaseTableModel;
+import com.veelur.sync.elasticsearch.model.DatabaseModel;
+import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
 import com.veelur.sync.elasticsearch.model.ThreadExecModel;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
-import com.veelur.sync.elasticsearch.service.DadaElasticsearchService;
-import com.veelur.sync.elasticsearch.service.DadaMappingService;
-import com.veelur.sync.elasticsearch.service.DadaSyncService;
+import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
+import com.veelur.sync.elasticsearch.service.VerMappingService;
+import com.veelur.sync.elasticsearch.service.VerSyncService;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -35,17 +35,17 @@ import java.util.stream.Collectors;
  * @Description: {相关描述}
  */
 @Service
-public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, DisposableBean {
-    private static final Logger logger = LoggerFactory.getLogger(DadaSyncServiceImpl.class);
+public class VerSyncServiceImpl implements VerSyncService, InitializingBean, DisposableBean {
+    private static final Logger logger = LoggerFactory.getLogger(VerSyncServiceImpl.class);
 
     @Autowired
-    private DadaMappingService mappingService;
+    private VerMappingService verMappingService;
 
     @Autowired
     private BaseDao baseDao;
 
     @Autowired
-    private DadaElasticsearchService elasticsearchService;
+    private VerElasticsearchService verElasticsearchService;
 
     private ExecutorService cachedThreadPool;
 
@@ -72,21 +72,21 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
     @Override
     public boolean syncByIndex(SyncByIndexRequest request) throws InfoNotRightException {
         //根据index获取信息
-        DadaDatabaseModel databaseWithIndexType = mappingService.getDatabaseWithIndexType(request.getIndex(), request.getType());
-        List<DataDatabaseTableModel> models;
+        DatabaseModel databaseWithIndexType = verMappingService.getDatabaseWithIndexType(request.getIndex(), request.getType());
+        List<VerDatabaseTableModel> models;
         if (null == databaseWithIndexType || CollectionUtils.isEmpty(models = databaseWithIndexType.getModels())) {
             logger.info("当前mapping信息错误");
             return false;
         }
         //根据对应的多个database获取数据
-        DataDatabaseTableModel mainModel = models.stream().filter(column ->
+        VerDatabaseTableModel mainModel = models.stream().filter(column ->
                 null != column.getMain() && MainTypeEnum.MAIN.getCode().equals(column.getMain()))
                 .findFirst().orElse(null);
         if (null == mainModel) {
             logger.info("当前mapping信息没有main数据");
             return false;
         }
-        List<DataDatabaseTableModel> insetDataTables = models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList());
+        List<VerDatabaseTableModel> insetDataTables = models.stream().filter(tableModel -> !mainModel.equals(tableModel)).collect(Collectors.toList());
         String pkStr = mainModel.getPkStr();
         List<Map<String, Object>> maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
                 0, request.getLimit(),
@@ -132,8 +132,8 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
         return null;
     }
 
-    private void poolDeals(DataDatabaseTableModel mainModel,
-                           SyncByIndexRequest request, List<DataDatabaseTableModel> insetDataTables,
+    private void poolDeals(VerDatabaseTableModel mainModel,
+                           SyncByIndexRequest request, List<VerDatabaseTableModel> insetDataTables,
                            Map<String, Object> firstMap) {
         cachedThreadPool.execute(() -> {
             logger.info(">>>>>>>>>>[poolDeals]>>>>>>>> start");
@@ -169,7 +169,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
 
     }
 
-    public void threadExec(DataDatabaseTableModel mainModel, List<DataDatabaseTableModel> insetDataTables,
+    public void threadExec(VerDatabaseTableModel mainModel, List<VerDatabaseTableModel> insetDataTables,
                            ThreadExecModel model, final Object lock) {
         if (null == lock) {
             throw new RuntimeException("锁设置异常");
@@ -209,13 +209,13 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
         logger.info("导入es信息成功,totalCount: {}", count);
     }
 
-    private void dealToEs(List<DataDatabaseTableModel> models, Map<String, Map<String, Object>> mapList,
+    private void dealToEs(List<VerDatabaseTableModel> models, Map<String, Map<String, Object>> mapList,
                           List<Object> pkStrs, String index, String type) {
         List<Map<String, Object>> subMaps;
         boolean oneToMore;
         Object orDefault;
         Map<String, Object> stringObjectMap;
-        for (DataDatabaseTableModel tableModel : models) {
+        for (VerDatabaseTableModel tableModel : models) {
             oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
             try {
                 subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
@@ -246,7 +246,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
                     }
                 }
                 //批量导入es中
-                elasticsearchService.batchInsertById(index, type, mapList);
+                verElasticsearchService.batchInsertById(index, type, mapList);
             } catch (Exception e) {
                 logger.error("处理导入es异常", e);
             }
@@ -254,7 +254,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
         logger.info("单次县城处理结束");
     }
 
-    private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, DataDatabaseTableModel dbModel) {
+    private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, VerDatabaseTableModel dbModel) {
         List<Map<String, Object>> jsonMaps = new ArrayList<>();
         maps.forEach(map -> {
             if (map == null) {
@@ -285,7 +285,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
     }
 
     @Override
-    public String convertColumnAndEsName(String columnName, DataDatabaseTableModel dbModel) {
+    public String convertColumnAndEsName(String columnName, VerDatabaseTableModel dbModel) {
         if (StringUtils.isEmpty(columnName)) {
             return null;
         }
@@ -302,7 +302,7 @@ public class DadaSyncServiceImpl implements DadaSyncService, InitializingBean, D
         return null;
     }
 
-    private String convertEsColumn(String columnName, DataDatabaseTableModel dbModel) {
+    private String convertEsColumn(String columnName, VerDatabaseTableModel dbModel) {
         Map<String, String> fields = dbModel.getConvert();
         if (null != fields && !fields.isEmpty()) {
             if (fields.containsKey(columnName)) {

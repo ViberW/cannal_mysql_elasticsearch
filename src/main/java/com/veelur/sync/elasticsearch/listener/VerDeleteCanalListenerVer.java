@@ -3,10 +3,10 @@ package com.veelur.sync.elasticsearch.listener;
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
-import com.veelur.sync.elasticsearch.event.DadaDeleteCanalEvent;
-import com.veelur.sync.elasticsearch.model.DadaIndexTypeModel;
-import com.veelur.sync.elasticsearch.model.DataDatabaseTableModel;
-import com.veelur.sync.elasticsearch.service.DadaElasticsearchService;
+import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
+import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
+import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
+import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,14 +23,14 @@ import java.util.Optional;
  * @version 1.0
  */
 @Component
-public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDeleteCanalEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(DadaDeleteCanalListener.class);
+public class VerDeleteCanalListenerVer extends VerAbstractCanalListener<VerDeleteCanalEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(VerDeleteCanalListenerVer.class);
 
     @Autowired
-    private DadaElasticsearchService elasticsearchService;
+    private VerElasticsearchService verElasticsearchService;
 
     @Override
-    protected void doSync(DataDatabaseTableModel dbModel, DadaIndexTypeModel esModel, RowData rowData) {
+    protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, RowData rowData) {
         List<Column> columns = rowData.getBeforeColumnsList();
         String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
         Column idColumn = columns.stream().filter(column ->
@@ -43,16 +43,16 @@ public class DadaDeleteCanalListener extends DadaAbstractCanalListener<DadaDelet
         }
         Integer main = dbModel.getMain();
         if (MainTypeEnum.MAIN.getCode().equals(main)) {
-            elasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
+            verElasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
         } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main)) {
             //删除es中的部分字段信息,置为null
             Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns, primaryKey);
-            elasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+            verElasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         } else if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //将对应的mapping的信息删除
             Map<String, Object> dataMap = new HashMap<>();
             dataMap.put(dbModel.getMainKey(), parseColumnsByKey(columns, dbModel.getMainKey()));
-            elasticsearchService.deleteList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+            verElasticsearchService.deleteList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
                     dataMap, dbModel.getListname(), dbModel.getMainKey());
         }
     }

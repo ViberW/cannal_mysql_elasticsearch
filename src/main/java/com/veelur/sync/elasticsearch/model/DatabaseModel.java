@@ -7,15 +7,15 @@ import java.util.List;
  * @date: 18-9-21
  * @Description: {相关描述}
  */
-public class DadaDatabaseModel {
+public class DatabaseModel {
 
-    List<DataDatabaseTableModel> models;
+    List<VerDatabaseTableModel> models;
 
-    public List<DataDatabaseTableModel> getModels() {
+    public List<VerDatabaseTableModel> getModels() {
         return models;
     }
 
-    public void setModels(List<DataDatabaseTableModel> models) {
+    public void setModels(List<VerDatabaseTableModel> models) {
         this.models = models;
     }
 }

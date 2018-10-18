@@ -7,10 +7,10 @@ import java.util.List;
  * @date: 18-9-25
  * @Description: {相关描述}
  */
-public class DadaConvertModel {
+public class ConvertModel {
     private String index;
     private String type;
-    private List<DadaDbConvertModel> dbs;
+    private List<DbConvertModel> dbs;
 
     public String getIndex() {
         return index;
@@ -28,11 +28,11 @@ public class DadaConvertModel {
         this.type = type;
     }
 
-    public List<DadaDbConvertModel> getDbs() {
+    public List<DbConvertModel> getDbs() {
         return dbs;
     }
 
-    public void setDbs(List<DadaDbConvertModel> dbs) {
+    public void setDbs(List<DbConvertModel> dbs) {
         this.dbs = dbs;
     }
 }

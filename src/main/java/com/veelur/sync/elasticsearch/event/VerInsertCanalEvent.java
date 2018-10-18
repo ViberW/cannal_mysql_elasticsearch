@@ -7,13 +7,13 @@ import com.star.sync.elasticsearch.event.CanalEvent;
  * @author Veelur
  * @version 1.0
  */
-public class DadaInsertCanalEvent extends CanalEvent {
+public class VerInsertCanalEvent extends CanalEvent {
     /**
      * Create a new ApplicationEvent.
      *
      * @param source the object on which the event initially occurred (never {@code null})
      */
-    public DadaInsertCanalEvent(Entry source) {
+    public VerInsertCanalEvent(Entry source) {
         super(source);
     }
 

@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.model;
 
+
 import com.star.sync.elasticsearch.model.DatabaseTableModel;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Map;
  * @date: 18-9-21
  * @Description: {相关描述}
  */
-public class DataDatabaseTableModel extends DatabaseTableModel {
+public class VerDatabaseTableModel extends DatabaseTableModel {
 
     private String listname;
 
@@ -26,11 +27,11 @@ public class DataDatabaseTableModel extends DatabaseTableModel {
 
     private Map<String, String> convert;
 
-    public DataDatabaseTableModel(String database, String table) {
+    public VerDatabaseTableModel(String database, String table) {
         super(database, table);
     }
 
-    public DataDatabaseTableModel() {
+    public VerDatabaseTableModel() {
     }
 
     public String getListname() {

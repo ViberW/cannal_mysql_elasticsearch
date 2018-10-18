@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ElasticsearchServiceImplTest {
+public class VerElasticsearchServiceImplTest {
 
     @Resource
     private TransportClient transportClient;

@@ -1,6 +1,6 @@
 package com.veelur.sync.elasticsearch.service.impl;
 
-import com.veelur.sync.elasticsearch.service.DadaElasticsearchService;
+import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import com.star.sync.elasticsearch.util.JsonUtil;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -28,9 +28,9 @@ import java.util.concurrent.ExecutionException;
  * @Description: {相关描述}
  */
 @Service
-public class DadaElasticsearchServiceImpl implements DadaElasticsearchService {
+public class VerElasticsearchServiceImpl implements VerElasticsearchService {
 
-    private static final Logger logger = LoggerFactory.getLogger(DadaElasticsearchServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(VerElasticsearchServiceImpl.class);
 
     @Autowired
     private TransportClient transportClient;

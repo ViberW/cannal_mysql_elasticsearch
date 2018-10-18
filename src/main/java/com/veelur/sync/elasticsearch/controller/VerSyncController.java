@@ -3,7 +3,7 @@ package com.veelur.sync.elasticsearch.controller;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 import com.veelur.sync.elasticsearch.model.response.Response;
-import com.veelur.sync.elasticsearch.service.DadaSyncService;
+import com.veelur.sync.elasticsearch.service.VerSyncService;
 import com.star.sync.elasticsearch.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/veelur/sync")
-public class DadaSyncController {
-    private static final Logger logger = LoggerFactory.getLogger(DadaSyncController.class);
+public class VerSyncController {
+    private static final Logger logger = LoggerFactory.getLogger(VerSyncController.class);
 
     @Autowired
-    private DadaSyncService syncService;
+    private VerSyncService verSyncService;
 
 
     /**
@@ -38,7 +38,7 @@ public class DadaSyncController {
             return Response.fail(1, bindingResult.getFieldErrors().toString());
         }
         logger.info("request_info: " + JsonUtil.toJson(request));
-        Response<Boolean> response = Response.success(syncService.syncByIndex(request));
+        Response<Boolean> response = Response.success(verSyncService.syncByIndex(request));
         logger.info("response_info: " + JsonUtil.toJson(request));
         return response;
     }

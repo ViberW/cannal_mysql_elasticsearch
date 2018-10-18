@@ -1,14 +1,14 @@
 package com.veelur.sync.elasticsearch.service;
 
-import com.veelur.sync.elasticsearch.model.DadaConnectModel;
-import com.veelur.sync.elasticsearch.model.DadaDatabaseModel;
+import com.veelur.sync.elasticsearch.model.ConnectModel;
+import com.veelur.sync.elasticsearch.model.DatabaseModel;
 
 /**
  * @author: veelur
  * @date: 18-9-21
  * @Description: {相关描述}
  */
-public interface DadaMappingService {
+public interface VerMappingService {
 
     /**
      * 获取Elasticsearch的数据转换后类型
@@ -19,8 +19,8 @@ public interface DadaMappingService {
      */
     Object getElasticsearchTypeObject(String mysqlType, String data);
 
-    DadaConnectModel getColumnWithData(String database, String table);
+    ConnectModel getColumnWithData(String database, String table);
 
-    DadaDatabaseModel getDatabaseWithIndexType(String index, String type);
+    DatabaseModel getDatabaseWithIndexType(String index, String type);
 
 }

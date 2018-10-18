@@ -205,7 +205,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
             dealToEs(insetDataTables, mapList, pkStrs, model.getIndex(), model.getType());
             count++;
-        } while (_limit != maps.size());
+        } while (_limit == maps.size());
         logger.info("导入es信息成功,totalCount: {}", count);
     }
 

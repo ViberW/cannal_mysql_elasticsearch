@@ -251,7 +251,6 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 logger.error("处理导入es异常", e);
             }
         }
-        logger.info("单次县城处理结束");
     }
 
     private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, VerDatabaseTableModel dbModel) {

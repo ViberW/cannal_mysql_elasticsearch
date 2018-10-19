@@ -43,11 +43,11 @@ public class VerDeleteCanalListenerVer extends VerAbstractCanalListener<VerDelet
         }
         Integer main = dbModel.getMain();
         if (MainTypeEnum.MAIN.getCode().equals(main)) {
-            verElasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
+            verElasticsearchService.deleteByQuery(esModel.getIndex(), esModel.getType(), idColumn.getValue());
         } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main)) {
             //删除es中的部分字段信息,置为null
             Map<String, Object> dataMap = parseColumnsToNullMap(dbModel, columns, primaryKey);
-            verElasticsearchService.updateById(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+            verElasticsearchService.deleteByQuerySet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         } else if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //将对应的mapping的信息删除
             Map<String, Object> dataMap = new HashMap<>();

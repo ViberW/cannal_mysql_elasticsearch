@@ -9,6 +9,9 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.UpdateByQueryAction;
+import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
@@ -145,6 +148,32 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         } catch (ExecutionException e) {
             logger.error("更新数据异常", e);
         }
+    }
+
+    @Override
+    public void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("message", dataMap);
+        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
+        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
+                .script(new Script(
+                        ScriptType.INLINE,
+                        Script.DEFAULT_SCRIPT_LANG,
+                        "ctx._source.putAll(params.message)",
+                        params));
+        updateByQuery.get();
+    }
+
+    @Override
+    public void deleteByQuery(String index, String type, String id) {
+        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
+        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
+                .script(new Script(
+                        ScriptType.INLINE,
+                        Script.DEFAULT_SCRIPT_LANG,
+                        "ctx.op='delete'",
+                        Collections.emptyMap()));
+        updateByQuery.get();
     }
 
     /****************************************简单的根据id进行操作****************************************/

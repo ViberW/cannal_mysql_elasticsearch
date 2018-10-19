@@ -23,6 +23,8 @@ public class BaseConstants {
 
     public static final String ID_KEY = "id-key";
 
+    public static final String _PKSTR_MAIN = "1101"; //作为保存pkstr的key
+
     /********************类型***********************/
     public static final String TYPE_STRING = "string";
     public static final String TYPE_LONG = "long";

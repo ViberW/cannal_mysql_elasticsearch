@@ -106,7 +106,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             logger.info("mapping根据pkStr获取信息不符合");
             return false;
         }
-        maps = parseColumnsToMapList(maps, mainModel);
+        maps = parseColumnsToMapList(maps, mainModel, false);
         Map<String, Map<String, Object>> mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
         dealToEs(insetDataTables, mapList, pkStrs, request.getIndex(), request.getType());
         logger.info("导入es信息第一次成功");
@@ -201,7 +201,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 logger.info("mapping根据pkStr获取信息不符合");
                 return;
             }
-            maps = parseColumnsToMapList(maps, mainModel);
+            maps = parseColumnsToMapList(maps, mainModel, false);
             mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
             dealToEs(insetDataTables, mapList, pkStrs, model.getIndex(), model.getType());
             count++;
@@ -219,9 +219,8 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
             try {
                 subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
-                subMaps = parseColumnsToMapList(subMaps, tableModel);
                 if (!CollectionUtils.isEmpty(subMaps)) {
-                    subMaps = parseColumnsToMapList(subMaps, tableModel);
+                    subMaps = parseColumnsToMapList(subMaps, tableModel, true);
                     if (oneToMore) {
                         for (Map<String, Object> subMap : subMaps) {
                             orDefault = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())))
@@ -231,14 +230,16 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                             } else {
                                 ArrayList<Map<String, Object>> maps = new ArrayList<>();
                                 maps.add(subMap);
-                                mapList.get(String.valueOf(subMap.get(tableModel.getPkStr()))).put(tableModel.getListname(), maps);
+                                mapList.get(String.valueOf(subMap.get(BaseConstants._PKSTR_MAIN))).put(tableModel.getListname(), maps);
                             }
+                            subMap.remove(BaseConstants._PKSTR_MAIN);
                         }
                     } else {
                         for (Map<String, Object> subMap : subMaps) {
                             if (null != subMap) {
-                                stringObjectMap = mapList.get(String.valueOf(subMap.get(tableModel.getPkStr())));
+                                stringObjectMap = mapList.get(String.valueOf(subMap.get(BaseConstants._PKSTR_MAIN)));
                                 if (null != stringObjectMap) {
+                                    subMap.remove(BaseConstants._PKSTR_MAIN);
                                     stringObjectMap.putAll(subMap);
                                 }
                             }
@@ -253,7 +254,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
         }
     }
 
-    private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, VerDatabaseTableModel dbModel) {
+    private List<Map<String, Object>> parseColumnsToMapList(List<Map<String, Object>> maps, VerDatabaseTableModel dbModel, boolean needPk) {
         List<Map<String, Object>> jsonMaps = new ArrayList<>();
         maps.forEach(map -> {
             if (map == null) {
@@ -261,6 +262,19 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             }
             Map<String, Object> jsonMap = new HashMap<>();
             map.forEach((s, o) -> {
+                if (needPk && s.equals(dbModel.getPkStr())) {
+                    if (o instanceof Timestamp) {
+                        jsonMap.put(BaseConstants._PKSTR_MAIN, new Date(((Timestamp) o).getTime()));
+                    } else if (o instanceof BigDecimal) {
+                        jsonMap.put(BaseConstants._PKSTR_MAIN, Double.valueOf(String.valueOf(o)));
+                    } else if (o instanceof BigInteger) {
+                        jsonMap.put(BaseConstants._PKSTR_MAIN, Integer.valueOf(String.valueOf(o)));
+                    } else if (o instanceof java.sql.Date) {
+                        jsonMap.put(BaseConstants._PKSTR_MAIN, (Date) o);
+                    } else {
+                        jsonMap.put(BaseConstants._PKSTR_MAIN, o);
+                    }
+                }
                 String esField = convertColumnAndEsName(s, dbModel);
                 if (StringUtils.isNotEmpty(esField)) {
                     if (o instanceof Timestamp) {

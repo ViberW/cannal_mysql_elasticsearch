@@ -5,6 +5,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
+import com.star.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
@@ -38,6 +39,8 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
 
     @Value("${canal.batch.size:1000}")
     private int canalBatchSize;
+    @Value("${canal.batch.error-count:6}")
+    private Integer canalBatchErrorCount;
     /**
      * 定时执行处理时间
      */
@@ -52,6 +55,8 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     private int delaySign = 0;
 
     private boolean zkPathNode = false;
+
+    private int errorCount = 0;
 
     @Scheduled(fixedDelay = schduleTime)
     @Override
@@ -71,8 +76,11 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
             // 回滚寻找上次中断的位置
             canalConnector.rollback();
         }
+        if (errorCount > canalBatchErrorCount) {
+            //休眠时间在次数大于errorCount后,开始乘于2^n次方秒休眠,和10分钟之间的最小值
+            ThreadUtil.sleep(Math.min(600000, 1000 << (errorCount - canalBatchErrorCount)));
+        }
         try {
-//            Message message = connector.get(batchSize);
             Message message = canalConnector.getWithoutAck(canalBatchSize);
             long batchId = message.getId();
             try {
@@ -86,9 +94,11 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
                     logger.info("获取binlog信息条数" + entries.size());
                 }
                 canalConnector.ack(batchId);
+                errorCount = 0;
             } catch (Exception e) {
                 logger.error("发送监听事件失败！batchId回滚,batchId=" + batchId, e);
                 canalConnector.rollback(batchId);
+                errorCount++;
             }
         } catch (Exception e) {
             logger.error("canal_scheduled异常！", e);

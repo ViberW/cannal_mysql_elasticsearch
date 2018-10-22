@@ -1,7 +1,8 @@
 package com.veelur.sync.elasticsearch.service.impl;
 
-import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import com.star.sync.elasticsearch.util.JsonUtil;
+import com.veelur.sync.elasticsearch.exception.ElasticErrorException;
+import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -45,10 +46,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
             UpdateRequest updateRequest = new UpdateRequest(index, type, id);
             updateRequest.doc(dataMap);
             transportClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             logger.error("更新数据异常", e);
-        } catch (ExecutionException e) {
-            logger.error("更新数据异常", e);
+            throw new ElasticErrorException(e.getMessage());
         }
     }
 
@@ -60,10 +60,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.doc(dataMap);
             transportClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             logger.error("更新数据异常", e);
-        } catch (ExecutionException e) {
-            logger.error("更新数据异常", e);
+            throw new ElasticErrorException(e.getMessage());
         }
     }
 
@@ -92,12 +91,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));
             transportClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException | IOException e) {
             logger.error("更新数据异常", e);
-        } catch (ExecutionException e) {
-            logger.error("更新数据异常", e);
-        } catch (IOException e) {
-            logger.error("更新数据异常", e);
+            throw new ElasticErrorException(e.getMessage());
         }
     }
 
@@ -118,12 +114,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));
             transportClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException | IOException e) {
             logger.error("更新数据异常", e);
-        } catch (ExecutionException e) {
-            logger.error("更新数据异常", e);
-        } catch (IOException e) {
-            logger.error("更新数据异常", e);
+            throw new ElasticErrorException(e.getMessage());
         }
     }
 
@@ -143,10 +136,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
                     "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
                     Collections.emptyMap()));
             transportClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             logger.error("更新数据异常", e);
-        } catch (ExecutionException e) {
-            logger.error("更新数据异常", e);
+            throw new ElasticErrorException(e.getMessage());
         }
     }
 

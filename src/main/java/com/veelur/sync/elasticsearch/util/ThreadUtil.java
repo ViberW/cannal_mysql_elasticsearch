@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.util;
+package com.veelur.sync.elasticsearch.util;
 
 /**
  * @author: veelur

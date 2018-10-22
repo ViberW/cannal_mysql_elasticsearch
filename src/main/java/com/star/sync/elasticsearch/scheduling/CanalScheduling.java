@@ -5,7 +5,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
-import com.star.sync.elasticsearch.util.ThreadUtil;
+import com.veelur.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
@@ -39,39 +39,13 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
 
     @Value("${canal.batch.size:1000}")
     private int canalBatchSize;
-    /**
-     * 定时执行处理时间
-     */
-    private static final long schduleTime = 100;
-    /**
-     * schdule保证10秒后执行
-     */
-    private int schduleCount = (int) (1000 * 10 / schduleTime);
-    /**
-     * 初始应用标志
-     */
-    private int delaySign = 0;
 
     private boolean zkPathNode = false;
 
-    @Scheduled(fixedDelay = schduleTime)
+    @Scheduled(fixedDelay = 100)
     @Override
     public void run() {
-        if (!zkPathNode) {
-            if (delaySign % schduleCount != 0) {
-                //延迟1分钟执行
-                delaySign++;
-                return;
-            } else if (!checkZookeeper()) {
-                delaySign = 1;
-                return;
-            }
-            zkPathNode = true;
-            // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
-            canalConnector.subscribe();
-            // 回滚寻找上次中断的位置
-            canalConnector.rollback();
-        }
+        if (!checkNeedExec()) return;
         try {
             Message message = canalConnector.getWithoutAck(canalBatchSize);
             long batchId = message.getId();
@@ -93,6 +67,21 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
         } catch (Exception e) {
             logger.error("canal_scheduled异常！", e);
         }
+    }
+
+    private boolean checkNeedExec() {
+        if (!zkPathNode) {
+            if (!checkZookeeper()) {
+                ThreadUtil.sleep(10000);//休眠10秒钟
+                return false;
+            }
+            zkPathNode = true;
+            // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
+            canalConnector.subscribe();
+            // 回滚寻找上次中断的位置
+            canalConnector.rollback();
+        }
+        return true;
     }
 
     private void publishCanalEvent(Entry entry) {

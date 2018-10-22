@@ -46,7 +46,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
 
     /****************************************dada自定义方法****************************************/
     @Override
-    public void checkAndSetIndex(String index, int numShards, int numReplicas, boolean convertNested) {
+    public void checkAndSetIndex(String index, String type, int numShards, int numReplicas, boolean convertNested) {
         IndicesAdminClient adminClient = transportClient.admin().indices();
         IndicesExistsRequest request = new IndicesExistsRequest(index);
         IndicesExistsResponse response = adminClient.exists(request).actionGet();
@@ -57,7 +57,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
                 .setSettings(Settings.builder().put("index.number_of_shards", numShards)
                         .put("index.number_of_replicas", numReplicas));
         if (convertNested) {
-            builder.addMapping("student",
+            builder.addMapping(type,
                     "{\"dynamic_templates\":[{\"nested\":{\"match_mapping_type\": \"object\"," +
                             "\"mapping\":{\"type\":\"nested\"}}}]}", XContentType.JSON);
         }

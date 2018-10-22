@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public interface VerElasticsearchService {
 
-    void checkAndSetIndex(String index, int numShards, int numReplicas, boolean convertNested);
+    void checkAndSetIndex(String index, String type, int numShards, int numReplicas, boolean convertNested);
 
     void updateById(String index, String type, String id, Map<String, Object> dataMap);
 

@@ -37,7 +37,7 @@ public class PostInitService implements InitializingBean {
         Set<VerIndexTypeModel> indexTypeModels = mappingService.getIndexTypeModels();
         if (CollectionUtils.isNotEmpty(indexTypeModels)) {
             for (VerIndexTypeModel model : indexTypeModels) {
-                elasticsearchService.checkAndSetIndex(model.getIndex(), numShards, numReplicas, convertNested);
+                elasticsearchService.checkAndSetIndex(model.getIndex(), model.getType(), numShards, numReplicas, convertNested);
             }
         }
     }

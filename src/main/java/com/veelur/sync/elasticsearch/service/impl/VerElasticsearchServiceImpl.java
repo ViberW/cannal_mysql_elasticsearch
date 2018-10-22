@@ -123,23 +123,22 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
     @Override
     public void deleteList(String index, String type, String id,
                            Map<String, Object> dataMap, String listName, String mainKey) {
-        try {
-            Object mainObj = dataMap.get(mainKey);
-            String mainValue;
-            if (null == mainObj || StringUtils.isEmpty(mainValue = mainObj.toString())) {
-                logger.error("mainkey错误");
-                return;
-            }
-            UpdateRequest updateRequest = new UpdateRequest(index, type, id);
-            updateRequest.script(new Script(ScriptType.INLINE,
-                    Script.DEFAULT_SCRIPT_LANG,
-                    "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
-                    Collections.emptyMap()));
-            transportClient.update(updateRequest).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("更新数据异常", e);
-            throw new ElasticErrorException(e.getMessage());
+        Object mainObj = dataMap.get(mainKey);
+        String mainValue;
+        if (null == mainObj || StringUtils.isEmpty(mainValue = mainObj.toString())) {
+            logger.error("mainkey错误");
+            return;
         }
+        Map<String, Object> params = new HashMap<>();
+        params.put("message", dataMap);
+        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
+        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
+                .script(new Script(
+                        ScriptType.INLINE,
+                        Script.DEFAULT_SCRIPT_LANG,
+                        "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
+                        params));
+        updateByQuery.get();
     }
 
     @Override

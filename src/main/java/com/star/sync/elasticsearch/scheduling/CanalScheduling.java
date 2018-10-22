@@ -5,10 +5,10 @@ import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
-import com.veelur.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
+import com.veelur.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ import java.util.List;
  * @since 2017-08-26 22:44:00
  */
 @Component
-@ConditionalOnExpression("${thread.schedul-active:true}")
+@ConditionalOnExpression("${thread.schedul.active:true}")
 public class CanalScheduling extends BasicWorker implements Runnable, ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(CanalScheduling.class);
     private ApplicationContext applicationContext;

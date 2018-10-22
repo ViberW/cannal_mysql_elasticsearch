@@ -11,6 +11,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.UpdateByQueryAction;
 import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
 import org.elasticsearch.script.Script;
@@ -131,40 +132,38 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         }
         Map<String, Object> params = new HashMap<>();
         params.put("message", dataMap);
-        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
-        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
+        UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient)
+                .source(index)
+                .filter(QueryBuilders.termQuery("_id", id))
                 .script(new Script(
                         ScriptType.INLINE,
                         Script.DEFAULT_SCRIPT_LANG,
                         "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
-                        params));
-        updateByQuery.get();
+                        params))
+                .get();
     }
 
     @Override
     public void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) {
         Map<String, Object> params = new HashMap<>();
         params.put("message", dataMap);
-        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
-        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
+        UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient)
+                .source(index)
+                .filter(QueryBuilders.termQuery("_id", id))
                 .script(new Script(
                         ScriptType.INLINE,
                         Script.DEFAULT_SCRIPT_LANG,
                         "ctx._source.putAll(params.message)",
-                        params));
-        updateByQuery.get();
+                        params))
+                .get();
     }
 
     @Override
     public void deleteByQuery(String index, String type, String id) {
-        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient);
-        updateByQuery.source(index).filter(QueryBuilders.termQuery("_id", id))
-                .script(new Script(
-                        ScriptType.INLINE,
-                        Script.DEFAULT_SCRIPT_LANG,
-                        "ctx.op='delete'",
-                        Collections.emptyMap()));
-        updateByQuery.get();
+        DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient)
+                .source(index)
+                .filter(QueryBuilders.matchQuery("_id", id))
+                .get();
     }
 
     /****************************************简单的根据id进行操作****************************************/

@@ -4,12 +4,18 @@ import com.star.sync.elasticsearch.util.JsonUtil;
 import com.veelur.sync.elasticsearch.exception.ElasticErrorException;
 import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.UpdateByQueryAction;
@@ -39,6 +45,26 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
     private TransportClient transportClient;
 
     /****************************************dada自定义方法****************************************/
+    @Override
+    public void checkAndSetIndex(String index, int numShards, int numReplicas, boolean convertNested) {
+        IndicesAdminClient adminClient = transportClient.admin().indices();
+        IndicesExistsRequest request = new IndicesExistsRequest(index);
+        IndicesExistsResponse response = adminClient.exists(request).actionGet();
+        if (response.isExists()) {
+            return;
+        }
+        CreateIndexRequestBuilder builder = adminClient.prepareCreate(index)
+                .setSettings(Settings.builder().put("index.number_of_shards", numShards)
+                        .put("index.number_of_replicas", numReplicas));
+        if (convertNested) {
+            builder.addMapping("student",
+                    "{\"dynamic_templates\":[{\"nested\":{\"match_mapping_type\": \"object\"," +
+                            "\"mapping\":{\"type\":\"nested\"}}}]}", XContentType.JSON);
+        }
+        builder.get();
+    }
+
+
     @Override
     public void updateById(String index, String type, String id, Map<String, Object> dataMap) {
         try {

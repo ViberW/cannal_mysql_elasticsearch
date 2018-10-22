@@ -4,6 +4,7 @@ import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
+import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -13,7 +14,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -56,6 +56,14 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         Optional<Map.Entry<String, VerMappingServiceImpl.Converter>> result = mysqlTypeElasticsearchTypeMapping.entrySet()
                 .parallelStream().filter(entry -> mysqlType.toLowerCase().contains(entry.getKey())).findFirst();
         return (result.isPresent() ? result.get().getValue() : (VerMappingServiceImpl.Converter) data1 -> data1).convert(data);
+    }
+
+    @Override
+    public Set<VerIndexTypeModel> getIndexTypeModels() {
+        if (CollectionUtils.isNotEmpty(dbEsBiMapping)) {
+            return dbEsBiMapping.values();
+        }
+        return null;
     }
 
     @Override

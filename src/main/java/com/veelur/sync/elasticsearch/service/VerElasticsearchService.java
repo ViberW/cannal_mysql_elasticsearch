@@ -9,6 +9,8 @@ import java.util.Map;
  */
 public interface VerElasticsearchService {
 
+    void checkAndSetIndex(String index, int numShards, int numReplicas, boolean convertNested);
+
     void updateById(String index, String type, String id, Map<String, Object> dataMap);
 
     void insertById(String index, String type, String id, Map<String, Object> dataMap);
@@ -22,9 +24,9 @@ public interface VerElasticsearchService {
     void updateList(String index, String type, String id,
                     Map<String, Object> dataMap, Map<String, Object> updateMap, String listName, String mainKey);
 
-    void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) ;
+    void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap);
 
-    void deleteByQuery(String index, String type, String id) ;
+    void deleteByQuery(String index, String type, String id);
 
     void deleteList(String index, String type, String id,
                     Map<String, Object> dataMap, String listName, String mainKey);

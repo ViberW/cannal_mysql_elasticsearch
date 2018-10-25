@@ -42,12 +42,15 @@ public class VerUpdateCanalListenerVer extends VerAbstractCanalListener<VerUpdat
             return;
         }
         Map<String, Object> updateMap = new HashMap<>();
-        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns,updateMap);
+        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, updateMap);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //更新入嵌套数组中
+            if (updateMap.isEmpty()) {
+                return;
+            }
             verElasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
-                    dataMap, updateMap,dbModel.getListname(), dbModel.getMainKey());
+                    dataMap, updateMap, dbModel.getListname(), dbModel.getMainKey());
         } else {
             verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

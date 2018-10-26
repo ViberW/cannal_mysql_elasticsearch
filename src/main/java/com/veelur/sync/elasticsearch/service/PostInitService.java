@@ -23,9 +23,9 @@ public class PostInitService implements InitializingBean {
     @Autowired
     private VerMappingService mappingService;
 
-    @Value("${elasticsearch.index.number_of_shards:3}")
+    @Value("${elasticsearch.index.number_of_shards:5}")
     private Integer numShards;
-    @Value("${elasticsearch.index.number_of_replicas:2}")
+    @Value("${elasticsearch.index.number_of_replicas:1}")
     private Integer numReplicas;
     @Value("${elasticsearch.index.convert-nested:true}")
     private Boolean convertNested;

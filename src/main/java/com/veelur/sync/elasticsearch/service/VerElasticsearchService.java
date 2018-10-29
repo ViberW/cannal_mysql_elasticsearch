@@ -32,5 +32,5 @@ public interface VerElasticsearchService {
                     Map<String, Object> dataMap, String listName, String mainKey);
 
     void insertList(String index, String type, String id,
-                    Map<String, Object> dataMap, String listName);
+                    Map<String, Object> dataMap, String listName, String mainKey);
 }

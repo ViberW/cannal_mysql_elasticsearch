@@ -124,8 +124,13 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
 
     @Override
     public void insertList(String index, String type, String id,
-                           Map<String, Object> dataMap, String listName) {
+                           Map<String, Object> dataMap, String listName, String mainKey) {
         try {
+            Object mainValue = dataMap.get(mainKey);
+            if (null == mainValue) {
+                logger.error("mainkey错误");
+                return;
+            }
             Map<String, Object> params = new HashMap<>();
             params.put("message", dataMap);
             params.put("field", listName);
@@ -135,7 +140,8 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
             updateRequest.script(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
-                            "{ctx._source." + listName + ".add(params.message)}" +
+                            "{Map it= ctx._source." + listName + ".find(item -> item." + mainKey + " == " + mainValue + ");"
+                            +"if(it == null || it.isEmpty()){ctx._source." + listName + ".add(params.message)}}" +
                             "else{ctx._source." + listName + "=[params.message]}",
                     params));
             transportClient.update(updateRequest).get();

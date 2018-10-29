@@ -47,7 +47,7 @@ public class VerInsertCanalListenerVer extends VerAbstractCanalListener<VerInser
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中
             verElasticsearchService.insertList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
-                    dataMap, dbModel.getListname());
+                    dataMap, dbModel.getListname(), dbModel.getMainKey());
         } else {
             verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.listener;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
@@ -30,17 +31,8 @@ public class VerUpdateCanalListenerVer extends VerAbstractCanalListener<VerUpdat
     private VerElasticsearchService verElasticsearchService;
 
     @Override
-    protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, RowData rowData) {
-        List<Column> columns = rowData.getAfterColumnsList();
-        String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
-        Column idColumn = columns.stream().filter(column ->
-                primaryKey.equals(column.getName())).findFirst().orElse(null);
-        if (idColumn == null || StringUtils.isBlank(idColumn.getValue())) {
-            logger.error("update_column_find_null_warn update从column中找不到主键" +
-                    ",database=" + dbModel.getDatabase() + ",table=" + dbModel.getTable() +
-                    ",pkStr=" + dbModel.getPkStr());
-            return;
-        }
+    protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
+                          List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         Map<String, Object> updateMap = new HashMap<>();
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, updateMap);
         Integer main = dbModel.getMain();

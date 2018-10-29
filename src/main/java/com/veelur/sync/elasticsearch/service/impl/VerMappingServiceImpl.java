@@ -80,6 +80,8 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         String include;
         String exclude;
         String[] split;
+        String attchstr;
+        String[] attchs;
         dbSingleMapping = HashBiMap.create();
 
         for (ConvertModel model : mappings) {
@@ -131,6 +133,21 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
                     if (StringUtils.isEmpty(verIndexTypeModel.getType())) {
                         verIndexTypeModel.setIndex(tableModel.getTable());
                     }
+                }
+                if (StringUtils.isNotBlank(dbConvertModel.getAttchstr())) {
+                    //说明有附加属性
+                    attchstr = dbConvertModel.getAttchstr();
+                    attchs = attchstr.split(BaseConstants.DEFAULT_SPLIT);
+                    Map<String, String> attchParams = new HashMap<>();
+                    String[] param;
+                    for (String attch : attchs) {
+                        param = attch.split("@");
+                        if (StringUtils.isBlank(param[0]) || StringUtils.isBlank(param[1])) {
+                            throw new InfoNotRightException("附加类别信息错误,attch=" + attch);
+                        }
+                        attchParams.put(param[0], param[1]);
+                    }
+                    tableModel.setAttchs(attchParams);
                 }
                 connectModel = new ConnectModel();
                 connectModel.setDbModel(tableModel);

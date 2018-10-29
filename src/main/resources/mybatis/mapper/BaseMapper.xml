@@ -89,6 +89,9 @@
             <if test="null != pk">
                 AND ${pkStr} <![CDATA[ > ]]> #{pk}
             </if>
+            <if test="attchs != null and  attchs != ''">
+                AND ${attchs}
+            </if>
         order by ${pkStr} asc
         limit #{start},#{limit}
     </select>
@@ -101,5 +104,8 @@
         <foreach collection="pkStrs" item="str" open="(" close=")" separator=",">
             #{str}
         </foreach>
+        <if test="attchs != null and  attchs != ''">
+            AND ${attchs}
+        </if>
     </select>
 </mapper>

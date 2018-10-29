@@ -11,6 +11,7 @@ import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
 import com.veelur.sync.elasticsearch.service.VerSyncService;
+import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -92,7 +92,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 0, request.getLimit(),
                 mainModel.getPkStr(), null, request.getOrderSign(),
                 convertParam(request.getStart(), request.getOrderType()),
-                convertParam(request.getEnd(), request.getOrderType()));
+                convertParam(request.getEnd(), request.getOrderType()), buildAttchParams(mainModel));
         if (CollectionUtils.isEmpty(maps)) {
             logger.info("获取信息完毕");
             return true;
@@ -112,6 +112,16 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
         logger.info("导入es信息第一次成功");
         poolDeals(mainModel, request, insetDataTables, maps.get(maps.size() - 1));
         return true;
+    }
+
+    private String buildAttchParams(VerDatabaseTableModel model) {
+        Map<String, String> attchs = model.getAttchs();
+        if (CollectionUtils.isNotEmpty(attchs)) {
+            StringBuffer params = new StringBuffer();
+            attchs.forEach((key, val) -> params.append(key).append(" = ").append(val).append(" and "));
+            return params.substring(0, params.length() - 5);
+        }
+        return null;
     }
 
     private Object convertParam(String param, String orderType) throws InfoNotRightException {
@@ -185,7 +195,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
                         0, _limit,
                         mainModel.getPkStr(), model.getPkValue(),
-                        model.getOrderSign(), model.getStart(), model.getEnd());
+                        model.getOrderSign(), model.getStart(), model.getEnd(), buildAttchParams(mainModel));
                 if (CollectionUtils.isEmpty(maps)) {
                     logger.info("获取信息完毕");
                     return;
@@ -218,7 +228,8 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
         for (VerDatabaseTableModel tableModel : models) {
             oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
             try {
-                subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(), tableModel.getPkStr(), pkStrs);
+                subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(),
+                        tableModel.getPkStr(), pkStrs, buildAttchParams(tableModel));
                 if (!CollectionUtils.isEmpty(subMaps)) {
                     subMaps = parseColumnsToMapList(subMaps, tableModel, true);
                     if (oneToMore) {

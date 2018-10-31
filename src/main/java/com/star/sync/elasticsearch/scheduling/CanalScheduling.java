@@ -8,11 +8,13 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
+import com.veelur.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +29,7 @@ import java.util.List;
  * @since 2017-08-26 22:44:00
  */
 @Component
+@ConditionalOnExpression("${thread.schedul.active:true}")
 public class CanalScheduling extends BasicWorker implements Runnable, ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(CanalScheduling.class);
     private ApplicationContext applicationContext;
@@ -36,41 +39,14 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
 
     @Value("${canal.batch.size:1000}")
     private int canalBatchSize;
-    /**
-     * 定时执行处理时间
-     */
-    private static final long schduleTime = 100;
-    /**
-     * schdule保证10秒后执行
-     */
-    private int schduleCount = (int) (1000 * 10 / schduleTime);
-    /**
-     * 初始应用标志
-     */
-    private int delaySign = 0;
 
     private boolean zkPathNode = false;
 
-    @Scheduled(fixedDelay = schduleTime)
+    @Scheduled(fixedDelay = 100)
     @Override
     public void run() {
-        if (!zkPathNode) {
-            if (delaySign % schduleCount != 0) {
-                //延迟1分钟执行
-                delaySign++;
-                return;
-            } else if (!checkZookeeper()) {
-                delaySign = 1;
-                return;
-            }
-            zkPathNode = true;
-            // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
-            canalConnector.subscribe();
-            // 回滚寻找上次中断的位置
-            canalConnector.rollback();
-        }
+        if (!checkNeedExec()) return;
         try {
-//            Message message = connector.get(batchSize);
             Message message = canalConnector.getWithoutAck(canalBatchSize);
             long batchId = message.getId();
             try {
@@ -91,6 +67,21 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
         } catch (Exception e) {
             logger.error("canal_scheduled异常！", e);
         }
+    }
+
+    private boolean checkNeedExec() {
+        if (!zkPathNode) {
+            if (!checkZookeeper()) {
+                ThreadUtil.sleep(10000);//休眠10秒钟
+                return false;
+            }
+            zkPathNode = true;
+            // 指定filter，格式 {database}.{table}，这里不做过滤，过滤操作留给用户
+            canalConnector.subscribe();
+            // 回滚寻找上次中断的位置
+            canalConnector.rollback();
+        }
+        return true;
     }
 
     private void publishCanalEvent(Entry entry) {

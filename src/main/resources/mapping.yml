@@ -10,7 +10,6 @@ ver:
             exclude:         #不转换字段
             pkstr: id      #作为索引的id的对应字段
             main: 1          #表类型 1-主表 2-1对1表 3-1对n表
-            listkv:
             convert: {}  #需要转换的字段 字段name转换为names
           - database: database1
             table: table2
@@ -18,7 +17,6 @@ ver:
             exclude:
             pkstr: id
             main: 2
-            listkv:
             convert: {field1: FIELD1}
           - database: database1
             table: table3
@@ -34,13 +32,13 @@ ver:
             exclude: id
             pkstr: s_id
             main: 2
-            listkv:
             convert: {}
           - database: database1
             table: table5
             include:
             exclude:
             pkstr: uid
+            attchstr: field_type@0  #附加判断属性,以@拼接,以逗号分割,例如字段类型为0代表用户,为1代表商家
             main: 3
             listkv: 'table5:id' # 1对n时转化成list的名称及对应主键 默认为表名称:id
             convert: {}

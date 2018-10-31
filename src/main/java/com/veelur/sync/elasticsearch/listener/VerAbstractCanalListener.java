@@ -8,6 +8,7 @@ import com.veelur.sync.elasticsearch.service.VerMappingService;
 import com.veelur.sync.elasticsearch.service.VerSyncService;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.star.sync.elasticsearch.event.CanalEvent;
+import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.context.ApplicationListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author: veelur
@@ -50,7 +52,7 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
             return;
         }
         // 封装model
-        change.getRowDatasList().forEach(rowData -> doSync(dbModel, esModel, rowData));
+        change.getRowDatasList().forEach(rowData -> dealSync(dbModel, esModel, rowData));
     }
 
     protected Map<String, Object> parseColumnsToMap(VerDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
@@ -73,8 +75,9 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
     }
 
     protected Map<String, Object> parseColumnsToNullMap(VerDatabaseTableModel dbModel,
-                                                        List<CanalEntry.Column> columns, String primaryKey) {
+                                                        List<CanalEntry.Column> columns) {
         Map<String, Object> jsonMap = new HashMap<>();
+        String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
         columns.forEach(column -> {
             if (column == null) {
                 return;
@@ -96,5 +99,36 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
         return null;
     }
 
-    protected abstract void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, CanalEntry.RowData rowData);
+    /**
+     * 前置处理
+     *
+     * @param dbModel
+     * @param esModel
+     * @param rowData
+     */
+    protected void dealSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, CanalEntry.RowData rowData) {
+        List<CanalEntry.Column> columns = rowData.getBeforeColumnsList();
+        String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
+        CanalEntry.Column idColumn = columns.stream().filter(column ->
+                primaryKey.equals(column.getName())).findFirst().orElse(null);
+        if (idColumn == null || StringUtils.isBlank(idColumn.getValue())) {
+            logger.error("insert_column_find_null_warn insert从column中找不到主键" +
+                    ",database=" + dbModel.getDatabase() + ",table=" + dbModel.getTable() +
+                    ",pkStr=" + dbModel.getPkStr());
+            return;
+        }
+        if (CollectionUtils.isNotEmpty(dbModel.getAttchs())) {
+            //判定和是否为该值
+            for (Map.Entry<String, String> entry : dbModel.getAttchs().entrySet()) {
+                if (!entry.getValue().equals(columns.stream().filter(column ->
+                        entry.getKey().equals(column.getName())).findFirst().orElse(null))) {
+                    return;
+                }
+            }
+        }
+        doSync(dbModel, esModel, columns, idColumn);
+    }
+
+    protected abstract void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
+                                   List<CanalEntry.Column> columns, CanalEntry.Column idColumn);
 }

@@ -1,5 +1,6 @@
 package com.star.sync.elasticsearch.client;
 
+import com.veelur.sync.elasticsearch.common.BaseConstants;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -28,15 +29,18 @@ public class ElasticsearchClient implements DisposableBean {
     @Value("${elasticsearch.host}")
     private String host;
     @Value("${elasticsearch.port}")
-    private String port;
+    private Integer port;
 
     @Bean
     public TransportClient getTransportClient() throws Exception {
-        Settings settings = Settings.builder().put("cluster.name", clusterName)
-                .put("client.transport.sniff", true)
+        Settings settings = Settings.builder().put("client.transport.ignore_cluster_name", true)
+                /*.put("client.transport.sniff", true)*/
                 .build();
-        transportClient = new PreBuiltTransportClient(Settings.EMPTY)
-                .addTransportAddress(new TransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
+        String[] hosts = host.split(BaseConstants.DEFAULT_SPLIT);
+        transportClient = new PreBuiltTransportClient(settings);
+        for (String ho : hosts) {
+            transportClient.addTransportAddress(new TransportAddress(InetAddress.getByName(ho), port));
+        }
         logger.info("elasticsearch transportClient 连接成功");
         return transportClient;
     }

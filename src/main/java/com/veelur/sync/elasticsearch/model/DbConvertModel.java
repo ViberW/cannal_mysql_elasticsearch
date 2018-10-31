@@ -15,6 +15,7 @@ public class DbConvertModel {
     private String pkstr;
     private Integer main;
     private String listkv;
+    private String attchstr;
     private Map<String, String> convert;
 
     public String getDatabase() {
@@ -79,5 +80,13 @@ public class DbConvertModel {
 
     public void setListkv(String listkv) {
         this.listkv = listkv;
+    }
+
+    public String getAttchstr() {
+        return attchstr;
+    }
+
+    public void setAttchstr(String attchstr) {
+        this.attchstr = attchstr;
     }
 }

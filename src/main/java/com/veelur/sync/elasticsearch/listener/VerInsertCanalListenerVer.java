@@ -1,5 +1,6 @@
 package com.veelur.sync.elasticsearch.listener;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.CanalEntry.Column;
 import com.alibaba.otter.canal.protocol.CanalEntry.RowData;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
@@ -29,25 +30,15 @@ public class VerInsertCanalListenerVer extends VerAbstractCanalListener<VerInser
     private VerElasticsearchService verElasticsearchService;
 
     @Override
-    protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, RowData rowData) {
-        //获取行数据的信息
-        List<Column> columns = rowData.getAfterColumnsList();
-        String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
-        Column idColumn = columns.stream().filter(column ->
-                primaryKey.equals(column.getName())).findFirst().orElse(null);
-        if (idColumn == null || StringUtils.isBlank(idColumn.getValue())) {
-            logger.error("insert_column_find_null_warn insert从column中找不到主键" +
-                    ",database=" + dbModel.getDatabase() + ",table=" + dbModel.getTable() +
-                    ",pkStr=" + dbModel.getPkStr());
-            return;
-        }
+    protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
+                          List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         //构建元数据map
         Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, null);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中
             verElasticsearchService.insertList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
-                    dataMap, dbModel.getListname());
+                    dataMap, dbModel.getListname(), dbModel.getMainKey());
         } else {
             verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

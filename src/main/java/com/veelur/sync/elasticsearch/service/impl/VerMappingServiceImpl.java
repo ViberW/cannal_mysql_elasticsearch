@@ -4,6 +4,7 @@ import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
+import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -13,7 +14,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -59,6 +59,14 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
     }
 
     @Override
+    public Set<VerIndexTypeModel> getIndexTypeModels() {
+        if (CollectionUtils.isNotEmpty(dbEsBiMapping)) {
+            return dbEsBiMapping.values();
+        }
+        return null;
+    }
+
+    @Override
     public void afterPropertiesSet() throws InfoNotRightException {
         dbEsBiMapping = HashBiMap.create();
         if (CollectionUtils.isEmpty(mappings)) {
@@ -72,6 +80,8 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         String include;
         String exclude;
         String[] split;
+        String attchstr;
+        String[] attchs;
         dbSingleMapping = HashBiMap.create();
 
         for (ConvertModel model : mappings) {
@@ -123,6 +133,21 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
                     if (StringUtils.isEmpty(verIndexTypeModel.getType())) {
                         verIndexTypeModel.setIndex(tableModel.getTable());
                     }
+                }
+                if (StringUtils.isNotBlank(dbConvertModel.getAttchstr())) {
+                    //说明有附加属性
+                    attchstr = dbConvertModel.getAttchstr();
+                    attchs = attchstr.split(BaseConstants.DEFAULT_SPLIT);
+                    Map<String, String> attchParams = new HashMap<>();
+                    String[] param;
+                    for (String attch : attchs) {
+                        param = attch.split("@");
+                        if (StringUtils.isBlank(param[0]) || StringUtils.isBlank(param[1])) {
+                            throw new InfoNotRightException("附加类别信息错误,attch=" + attch);
+                        }
+                        attchParams.put(param[0], param[1]);
+                    }
+                    tableModel.setAttchs(attchParams);
                 }
                 connectModel = new ConnectModel();
                 connectModel.setDbModel(tableModel);

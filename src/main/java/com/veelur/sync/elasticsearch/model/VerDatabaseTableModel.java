@@ -25,6 +25,8 @@ public class VerDatabaseTableModel extends DatabaseTableModel {
 
     private List<String> excludeField;
 
+    private Map<String, String> attchs;
+
     private Map<String, String> convert;
 
     public VerDatabaseTableModel(String database, String table) {
@@ -80,6 +82,14 @@ public class VerDatabaseTableModel extends DatabaseTableModel {
 
     public void setExcludeField(List<String> excludeField) {
         this.excludeField = excludeField;
+    }
+
+    public Map<String, String> getAttchs() {
+        return attchs;
+    }
+
+    public void setAttchs(Map<String, String> attchs) {
+        this.attchs = attchs;
     }
 
     public Map<String, String> getConvert() {

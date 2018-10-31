@@ -2,6 +2,9 @@ package com.veelur.sync.elasticsearch.service;
 
 import com.veelur.sync.elasticsearch.model.ConnectModel;
 import com.veelur.sync.elasticsearch.model.DatabaseModel;
+import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
+
+import java.util.Set;
 
 /**
  * @author: veelur
@@ -22,5 +25,7 @@ public interface VerMappingService {
     ConnectModel getColumnWithData(String database, String table);
 
     DatabaseModel getDatabaseWithIndexType(String index, String type);
+
+    Set<VerIndexTypeModel> getIndexTypeModels();
 
 }

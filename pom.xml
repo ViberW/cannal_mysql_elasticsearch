@@ -5,7 +5,7 @@
 
     <groupId>com.veelur.sync</groupId>
     <artifactId>canal-mysql-elasticsearch</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.2</version>
     <packaging>jar</packaging>
 
     <name>canal-mysql-elasticsearch</name>

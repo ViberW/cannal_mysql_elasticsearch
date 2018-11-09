@@ -9,16 +9,11 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsReques
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.DeleteByQueryAction;
-import org.elasticsearch.index.reindex.UpdateByQueryAction;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
@@ -29,7 +24,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author: veelur
@@ -64,62 +58,38 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         builder.get();
     }
 
-
-    @Override
-    public void updateById(String index, String type, String id, Map<String, Object> dataMap) {
-        try {
-            UpdateRequest updateRequest = new UpdateRequest(index, type, id);
-            updateRequest.doc(dataMap);
-            transportClient.update(updateRequest).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("更新数据异常", e);
-            throw new ElasticErrorException(e.getMessage());
-        }
-    }
-
     @Override
     public void updateSet(String index, String type, String id, Map<String, Object> dataMap) {
-        try {
-            IndexRequest indexRequest = new IndexRequest(index, type, id);
-            indexRequest.source(dataMap);
-            UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
-            updateRequest.doc(dataMap);
-            transportClient.update(updateRequest).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("更新数据异常", e);
-            throw new ElasticErrorException(e.getMessage());
-        }
+        transportClient.prepareUpdate(index, type, id).setDoc(dataMap).setUpsert(dataMap);
     }
 
     @Override
     public void updateList(String index, String type, String id,
                            Map<String, Object> dataMap, Map<String, Object> updateMap, String listName, String mainKey) {
+
+        Object mainValue = dataMap.get(mainKey);
+        if (null == mainValue) {
+            logger.error("mainkey错误");
+            return;
+        }
+        Map<String, Object> params = new HashMap<>();
+        params.put("message", dataMap);
+        params.put("field", listName);
+        params.put("updates", updateMap);
+        params.put("value", mainValue);
+        params.put("key", mainKey);
         try {
-            Object mainValue = dataMap.get(mainKey);
-            if (null == mainValue) {
-                logger.error("mainkey错误");
-                return;
-            }
-            Map<String, Object> params = new HashMap<>();
-            params.put("message", dataMap);
-            params.put("field", listName);
-            params.put("updates", updateMap);
-            params.put("value", mainValue);
-            params.put("key", mainKey);
-            IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
-                    .startObject().array(listName, dataMap).endObject());
-            UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
-            updateRequest.script(new Script(ScriptType.INLINE,
+            transportClient.prepareUpdate(index, type, id).setScript(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
                             "{Map it= ctx._source.get(params.field).find(item -> item.get(params.key) == params.value);"
                             + "if(it != null && !it.isEmpty()){it.putAll(params.updates)}" +
                             "else{ctx._source.get(params.field).add(params.message)}}" +
                             "else{ctx._source.put(params.field,[params.message])}",
-                    params));
-            transportClient.update(updateRequest).get();
-        } catch (InterruptedException | ExecutionException | IOException e) {
-            logger.error("更新数据异常", e);
+                    params)).setUpsert(XContentFactory.jsonBuilder()
+                    .startObject().array(listName, dataMap).endObject()).get();
+        } catch (IOException e) {
+            logger.error("组建数据异常", e);
             throw new ElasticErrorException(e.getMessage());
         }
     }
@@ -127,30 +97,27 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
     @Override
     public void insertList(String index, String type, String id,
                            Map<String, Object> dataMap, String listName, String mainKey) {
+        Object mainValue = dataMap.get(mainKey);
+        if (null == mainValue) {
+            logger.error("mainkey错误");
+            return;
+        }
+        Map<String, Object> params = new HashMap<>();
+        params.put("message", dataMap);
+        params.put("field", listName);
+        params.put("value", mainValue);
+        params.put("key", mainKey);
         try {
-            Object mainValue = dataMap.get(mainKey);
-            if (null == mainValue) {
-                logger.error("mainkey错误");
-                return;
-            }
-            Map<String, Object> params = new HashMap<>();
-            params.put("message", dataMap);
-            params.put("field", listName);
-            params.put("value", mainValue);
-            params.put("key", mainKey);
-            IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
-                    .startObject().array(listName, dataMap).endObject());
-            UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
-            updateRequest.script(new Script(ScriptType.INLINE,
+            transportClient.prepareUpdate(index, type, id).setScript(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
                             "{Map it= ctx._source.get(params.field).find(item -> item.get(params.key) == params.value);"
                             + "if(it == null || it.isEmpty()){ctx._source.get(params.field).add(params.message)}}" +
                             "else{ctx._source.put(params.field,[params.message])}",
-                    params));
-            transportClient.update(updateRequest).get();
-        } catch (InterruptedException | ExecutionException | IOException e) {
-            logger.error("更新数据异常", e);
+                    params)).setUpsert(XContentFactory.jsonBuilder()
+                    .startObject().array(listName, dataMap).endObject()).get();
+        } catch (IOException e) {
+            logger.error("组建数据异常", e);
             throw new ElasticErrorException(e.getMessage());
         }
     }
@@ -169,13 +136,11 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         params.put("value", mainValue);
         params.put("key", mainKey);
         params.put("field", listName);
-        UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient)
-                .source(index)
-                .filter(QueryBuilders.termQuery("_id", id))
-                .script(new Script(
+        transportClient.prepareUpdate(index, type, id)
+                .setScript(new Script(
                         ScriptType.INLINE,
                         Script.DEFAULT_SCRIPT_LANG,
-                        "if(ctx._source.containsKey(params.field))" +
+                        "if(ctx._source !=null && !ctx._source.isEmpty() && ctx._source.containsKey(params.field))" +
                                 "{ctx._source.get(params.field).removeIf(item -> item.get(params.key) == params.value)}",
                         params))
                 .get();
@@ -185,23 +150,11 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
     public void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) {
         Map<String, Object> params = new HashMap<>();
         params.put("message", dataMap);
-        UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient)
-                .source(index)
-                .filter(QueryBuilders.termQuery("_id", id))
-                .script(new Script(
-                        ScriptType.INLINE,
-                        Script.DEFAULT_SCRIPT_LANG,
-                        "ctx._source.putAll(params.message)",
-                        params))
-                .get();
-    }
-
-    @Override
-    public void deleteByQuery(String index, String type, String id) {
-        DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient)
-                .source(index)
-                .filter(QueryBuilders.matchQuery("_id", id))
-                .get();
+        transportClient.prepareUpdate(index, type, id).setScript(new Script(
+                ScriptType.INLINE,
+                Script.DEFAULT_SCRIPT_LANG,
+                "if(ctx._source !=null && !ctx._source.isEmpty())ctx._source.putAll(params.message)",
+                params)).get();
     }
 
     /****************************************简单的根据id进行操作****************************************/

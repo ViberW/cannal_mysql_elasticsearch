@@ -11,8 +11,6 @@ public interface VerElasticsearchService {
 
     void checkAndSetIndex(String index, String type, int numShards, int numReplicas, boolean convertNested);
 
-    void updateById(String index, String type, String id, Map<String, Object> dataMap);
-
     void insertById(String index, String type, String id, Map<String, Object> dataMap);
 
     void batchInsertById(String index, String type, Map<String, Map<String, Object>> idDataMap);
@@ -25,8 +23,6 @@ public interface VerElasticsearchService {
                     Map<String, Object> dataMap, Map<String, Object> updateMap, String listName, String mainKey);
 
     void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap);
-
-    void deleteByQuery(String index, String type, String id);
 
     void deleteList(String index, String type, String id,
                     Map<String, Object> dataMap, String listName, String mainKey);

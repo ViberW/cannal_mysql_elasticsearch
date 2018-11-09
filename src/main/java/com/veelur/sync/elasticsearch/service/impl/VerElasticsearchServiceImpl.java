@@ -104,16 +104,18 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
             params.put("message", dataMap);
             params.put("field", listName);
             params.put("updates", updateMap);
+            params.put("value", mainValue);
+            params.put("key", mainKey);
             IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
                     .startObject().array(listName, dataMap).endObject());
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.script(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
-                            "{Map it= ctx._source." + listName + ".find(item -> item." + mainKey + " == " + mainValue + ");"
+                            "{Map it= ctx._source.get(params.field).find(item -> item.get(params.key) == params.value);"
                             + "if(it != null && !it.isEmpty()){it.putAll(params.updates)}" +
-                            "else{ctx._source." + listName + ".add(params.message)}}" +
-                            "else{ctx._source." + listName + "=[params.message]}",
+                            "else{ctx._source.get(params.field).add(params.message)}}" +
+                            "else{ctx._source.put(params.field,[params.message])}",
                     params));
             transportClient.update(updateRequest).get();
         } catch (InterruptedException | ExecutionException | IOException e) {
@@ -134,15 +136,17 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
             Map<String, Object> params = new HashMap<>();
             params.put("message", dataMap);
             params.put("field", listName);
+            params.put("value", mainValue);
+            params.put("key", mainKey);
             IndexRequest indexRequest = new IndexRequest(index, type, id).source(XContentFactory.jsonBuilder()
                     .startObject().array(listName, dataMap).endObject());
             UpdateRequest updateRequest = new UpdateRequest(index, type, id).upsert(indexRequest);
             updateRequest.script(new Script(ScriptType.INLINE,
                     Script.DEFAULT_SCRIPT_LANG,
                     "if(ctx._source.containsKey(params.field))" +
-                            "{Map it= ctx._source." + listName + ".find(item -> item." + mainKey + " == " + mainValue + ");"
-                            +"if(it == null || it.isEmpty()){ctx._source." + listName + ".add(params.message)}}" +
-                            "else{ctx._source." + listName + "=[params.message]}",
+                            "{Map it= ctx._source.get(params.field).find(item -> item.get(params.key) == params.value);"
+                            + "if(it == null || it.isEmpty()){ctx._source.get(params.field).add(params.message)}}" +
+                            "else{ctx._source.put(params.field,[params.message])}",
                     params));
             transportClient.update(updateRequest).get();
         } catch (InterruptedException | ExecutionException | IOException e) {
@@ -162,13 +166,17 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         }
         Map<String, Object> params = new HashMap<>();
         params.put("message", dataMap);
+        params.put("value", mainValue);
+        params.put("key", mainKey);
+        params.put("field", listName);
         UpdateByQueryAction.INSTANCE.newRequestBuilder(transportClient)
                 .source(index)
                 .filter(QueryBuilders.termQuery("_id", id))
                 .script(new Script(
                         ScriptType.INLINE,
                         Script.DEFAULT_SCRIPT_LANG,
-                        "ctx._source." + listName + ".removeIf(item -> item." + mainKey + " == " + mainValue + ");",
+                        "if(ctx._source.containsKey(params.field))" +
+                                "{ctx._source.get(params.field).removeIf(item -> item.get(params.key) == params.value)}",
                         params))
                 .get();
     }

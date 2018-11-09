@@ -140,7 +140,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
                 .setScript(new Script(
                         ScriptType.INLINE,
                         Script.DEFAULT_SCRIPT_LANG,
-                        "if(ctx._source !=null && !ctx._source.isEmpty() && ctx._source.containsKey(params.field))" +
+                        "if(ctx._source.containsKey(params.field))" +
                                 "{ctx._source.get(params.field).removeIf(item -> item.get(params.key) == params.value)}",
                         params))
                 .get();
@@ -153,7 +153,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
         transportClient.prepareUpdate(index, type, id).setScript(new Script(
                 ScriptType.INLINE,
                 Script.DEFAULT_SCRIPT_LANG,
-                "if(ctx._source !=null && !ctx._source.isEmpty())ctx._source.putAll(params.message)",
+                "ctx._source.putAll(params.message)",
                 params)).get();
     }
 

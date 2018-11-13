@@ -1,18 +1,24 @@
 package com.star.sync.elasticsearch.scheduling;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
 import com.alibaba.otter.canal.protocol.CanalEntry.EventType;
 import com.alibaba.otter.canal.protocol.Message;
+import com.veelur.sync.elasticsearch.config.ParamsConfig;
 import com.veelur.sync.elasticsearch.event.VerDeleteCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerInsertCanalEvent;
 import com.veelur.sync.elasticsearch.event.VerUpdateCanalEvent;
+import com.veelur.sync.elasticsearch.exception.ElasticErrorException;
+import com.veelur.sync.elasticsearch.model.ElasticResultEntity;
+import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import com.veelur.sync.elasticsearch.util.ThreadUtil;
 import com.veelur.sync.elasticsearch.worker.BasicWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
@@ -37,8 +43,11 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     @Resource
     private CanalConnector canalConnector;
 
-    @Value("${canal.batch.size:1000}")
-    private int canalBatchSize;
+    @Autowired
+    private ParamsConfig paramsConfig;
+
+    @Autowired
+    private VerElasticsearchService verElasticsearchService;
 
     private boolean zkPathNode = false;
 
@@ -47,7 +56,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     public void run() {
         if (!checkNeedExec()) return;
         try {
-            Message message = canalConnector.getWithoutAck(canalBatchSize);
+            Message message = canalConnector.getWithoutAck(paramsConfig.getElasticBatchSize());
             long batchId = message.getId();
             try {
                 List<Entry> entries = message.getEntries();
@@ -57,6 +66,12 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
                             publishCanalEvent(entry);
                         }
                     });
+                    //执行处理bulk中的请求
+                    verElasticsearchService.flush();
+                    if (!verElasticsearchService.getResultEntity().getFlag()) {
+                        ElasticResultEntity resultEntity = verElasticsearchService.getResultEntity();
+                        throw new ElasticErrorException("_traceId:" + resultEntity.getId() + ",resultEntity:" + JSON.toJSONString(resultEntity));
+                    }
                     logger.info("获取binlog信息条数" + entries.size());
                 }
                 canalConnector.ack(batchId);

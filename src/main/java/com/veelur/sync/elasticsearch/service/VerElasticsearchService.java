@@ -1,5 +1,7 @@
 package com.veelur.sync.elasticsearch.service;
 
+import com.veelur.sync.elasticsearch.model.ElasticResultEntity;
+
 import java.util.Map;
 
 /**
@@ -9,9 +11,13 @@ import java.util.Map;
  */
 public interface VerElasticsearchService {
 
-    void checkAndSetIndex(String index, String type, int numShards, int numReplicas, boolean convertNested);
+    ElasticResultEntity getResultEntity();
 
-    void insertById(String index, String type, String id, Map<String, Object> dataMap);
+    void flush();
+
+    void checkAndSetIndex(String index, String type);
+
+    void checkAndSetStoredScript();
 
     void batchInsertById(String index, String type, Map<String, Map<String, Object>> idDataMap);
 

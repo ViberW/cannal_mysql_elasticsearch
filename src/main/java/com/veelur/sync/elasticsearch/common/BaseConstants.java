@@ -30,4 +30,10 @@ public class BaseConstants {
     public static final String TYPE_LONG = "long";
     public static final String TYPE_DOUBLE = "double";
     public static final String TYPE_DATE = "date";
+
+    /********************stored_script***********************/
+    public static final String SCRIPT_INSET_LIST = "data_mysql_es_insert_list";
+    public static final String SCRIPT_UPDATE_LIST = "data_mysql_es_update_list";
+    public static final String SCRIPT_DELETE_LIST = "data_mysql_es_delete_list";
+    public static final String SCRIPT_DELETE_NULL = "data_mysql_es_delete_null";
 }

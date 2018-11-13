@@ -3,6 +3,7 @@ package com.veelur.sync.elasticsearch.service.impl;
 import com.star.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
+import com.veelur.sync.elasticsearch.config.ParamsConfig;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.DatabaseModel;
 import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
@@ -49,17 +50,16 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
 
     private ExecutorService cachedThreadPool;
 
-    @Value("${thread.size.pool}")
-    private Integer threadPoolSize;
-    @Value("${thread.size.down-latch}")
-    private Integer threadDownLatchSize;
+    @Autowired
+    private ParamsConfig paramsConfig;
 
     @Override
     public void afterPropertiesSet() throws InfoNotRightException {
-        if (threadPoolSize < 0 || threadDownLatchSize < 0) {
+        if (paramsConfig.getThreadPoolSize() < 0 || paramsConfig.getThreadDownLatchSize() < 0) {
             throw new InfoNotRightException("参数设置异常");
         }
-        cachedThreadPool = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
+        cachedThreadPool = new ThreadPoolExecutor(paramsConfig.getThreadPoolSize(), paramsConfig.getThreadPoolSize(),
+                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), (ThreadFactory) Thread::new);
     }
 
     @Override
@@ -149,13 +149,13 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             logger.info(">>>>>>>>>>[poolDeals]>>>>>>>> start");
             Object lock = new Object();
             long start = System.currentTimeMillis();
-            final CountDownLatch begin = new CountDownLatch(threadDownLatchSize);
+            final CountDownLatch begin = new CountDownLatch(paramsConfig.getThreadDownLatchSize());
             try {
                 ThreadExecModel model = new ThreadExecModel(null == firstMap ? null : firstMap.get(mainModel.getPkStr()),
                         request.getIndex(), request.getType(), request.getOrderSign(),
                         convertParam(request.getStart(), request.getOrderType()),
                         convertParam(request.getEnd(), request.getOrderType()), request.getLimit());
-                for (int i = 0; i < threadDownLatchSize; i++) {
+                for (int i = 0; i < paramsConfig.getThreadDownLatchSize(); i++) {
                     new Thread(() -> {
                         logger.info(Thread.currentThread().getName() + ">>>[threadExec]>>> start");
                         long threadstart = System.currentTimeMillis();

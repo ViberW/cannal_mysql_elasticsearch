@@ -17,9 +17,6 @@ public class ParamsConfig {
     private Integer threadPoolSize;
     @Value("${thread.size.down-latch:10}")
     private Integer threadDownLatchSize;
-    @Value("${data.year-field:}")
-    private String dataYearField;
-
     @Value("${elasticsearch.retry.conflit:3}")
     private Integer elasticRetryConflit;
     @Value("${elasticsearch.index.number_of_shards:3}")
@@ -49,14 +46,6 @@ public class ParamsConfig {
 
     public void setThreadDownLatchSize(Integer threadDownLatchSize) {
         this.threadDownLatchSize = threadDownLatchSize;
-    }
-
-    public String getDataYearField() {
-        return dataYearField;
-    }
-
-    public void setDataYearField(String dataYearField) {
-        this.dataYearField = dataYearField;
     }
 
     public Integer getElasticRetryConflit() {

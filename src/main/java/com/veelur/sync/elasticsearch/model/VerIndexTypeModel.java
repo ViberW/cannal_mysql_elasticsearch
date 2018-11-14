@@ -1,6 +1,7 @@
 package com.veelur.sync.elasticsearch.model;
 
-import com.star.sync.elasticsearch.model.IndexTypeModel;
+
+import com.veelur.sync.elasticsearch.model.base.IndexTypeModel;
 
 /**
  * @author: veelur

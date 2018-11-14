@@ -23,6 +23,8 @@ public class ParamsConfig {
     private Integer elasticIndexNumOfShards;
     @Value("${elasticsearch.index.number_of_replicas:2}")
     private Integer elasticIndexNumOfReplicas;
+    @Value("${elasticsearch.index.convert-nested:true}")
+    private Boolean convertNested;
 
     public Integer getElasticBatchSize() {
         return elasticBatchSize;
@@ -70,5 +72,13 @@ public class ParamsConfig {
 
     public void setElasticIndexNumOfReplicas(Integer elasticIndexNumOfReplicas) {
         this.elasticIndexNumOfReplicas = elasticIndexNumOfReplicas;
+    }
+
+    public Boolean getConvertNested() {
+        return convertNested;
+    }
+
+    public void setConvertNested(Boolean convertNested) {
+        this.convertNested = convertNested;
     }
 }

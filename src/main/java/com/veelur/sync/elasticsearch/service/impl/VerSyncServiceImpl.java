@@ -1,9 +1,9 @@
 package com.veelur.sync.elasticsearch.service.impl;
 
-import com.star.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.config.ParamsConfig;
+import com.veelur.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.DatabaseModel;
 import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;

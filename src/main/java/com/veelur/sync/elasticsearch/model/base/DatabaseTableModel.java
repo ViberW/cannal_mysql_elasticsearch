@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.model;
+package com.veelur.sync.elasticsearch.model.base;
 
 import com.google.common.base.Objects;
 

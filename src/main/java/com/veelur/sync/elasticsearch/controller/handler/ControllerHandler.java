@@ -1,6 +1,6 @@
-package com.star.sync.elasticsearch.controller.handler;
+package com.veelur.sync.elasticsearch.controller.handler;
 
-import com.star.sync.elasticsearch.model.response.Response;
+import com.veelur.sync.elasticsearch.model.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ControllerAdvice;

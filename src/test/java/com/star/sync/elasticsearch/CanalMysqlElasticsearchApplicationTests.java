@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class CanalMysqlElasticsearchSyncApplicationTests {
+public class CanalMysqlElasticsearchApplicationTests {
 
 	@Test
 	public void contextLoads() {

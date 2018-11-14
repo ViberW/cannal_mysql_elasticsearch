@@ -4,7 +4,7 @@ import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 import com.veelur.sync.elasticsearch.model.response.Response;
 import com.veelur.sync.elasticsearch.service.VerSyncService;
-import com.star.sync.elasticsearch.util.JsonUtil;
+import com.veelur.sync.elasticsearch.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +37,9 @@ public class VerSyncController {
             logger.info("全量同步信息错误" + bindingResult.getFieldErrors().toString());
             return Response.fail(1, bindingResult.getFieldErrors().toString());
         }
-        logger.info("request_info: " + JsonUtil.toJson(request));
+        logger.info("request_info: " + JsonUtils.toJson(request));
         Response<Boolean> response = Response.success(verSyncService.syncByIndex(request));
-        logger.info("response_info: " + JsonUtil.toJson(request));
+        logger.info("response_info: " + JsonUtils.toJson(request));
         return response;
     }
 }

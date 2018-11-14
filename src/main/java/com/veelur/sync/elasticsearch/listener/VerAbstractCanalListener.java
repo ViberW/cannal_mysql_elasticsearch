@@ -1,13 +1,13 @@
 package com.veelur.sync.elasticsearch.listener;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.veelur.sync.elasticsearch.event.CanalEvent;
 import com.veelur.sync.elasticsearch.model.ConnectModel;
-import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
 import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
+import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
 import com.veelur.sync.elasticsearch.service.VerSyncService;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.star.sync.elasticsearch.event.CanalEvent;
 import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ import java.util.Optional;
  * @Description: {相关描述}
  */
 public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> implements ApplicationListener<EVENT> {
-    private static final Logger logger = LoggerFactory.getLogger(com.star.sync.elasticsearch.listener.AbstractCanalListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(VerAbstractCanalListener.class);
 
     @Autowired
     private VerMappingService verMappingService;

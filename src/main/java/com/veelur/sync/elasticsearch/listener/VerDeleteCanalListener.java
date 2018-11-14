@@ -21,8 +21,8 @@ import java.util.Map;
  * @version 1.0
  */
 @Component
-public class VerDeleteCanalListenerVer extends VerAbstractCanalListener<VerDeleteCanalEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(VerDeleteCanalListenerVer.class);
+public class VerDeleteCanalListener extends VerAbstractCanalListener<VerDeleteCanalEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(VerDeleteCanalListener.class);
 
     @Autowired
     private VerElasticsearchService verElasticsearchService;

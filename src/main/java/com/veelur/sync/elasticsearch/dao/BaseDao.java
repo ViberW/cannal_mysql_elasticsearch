@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.dao;
+package com.veelur.sync.elasticsearch.dao;
 
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -33,15 +33,15 @@ public interface BaseDao {
     /**
      * veelur自定义方法
      */
-    List<Map<String, Object>> selectByPKWithPage(@Param("databaseName")String database, @Param("tableName")String table,
-                                                 @Param("start")int start, @Param("limit")int limit,
-                                                 @Param("pkStr")String pkStr,@Param("pk")Object pk,
-                                                 @Param("orderSign")String orderSign,
-                                                 @Param("begin")Object begin, @Param("end")Object end,
-                                                 @Param("attchs")String attchs);
+    List<Map<String, Object>> selectByPKWithPage(@Param("databaseName") String database, @Param("tableName") String table,
+                                                 @Param("start") int start, @Param("limit") int limit,
+                                                 @Param("pkStr") String pkStr, @Param("pk") Object pk,
+                                                 @Param("orderSign") String orderSign,
+                                                 @Param("begin") Object begin, @Param("end") Object end,
+                                                 @Param("attchs") String attchs);
 
-    List<Map<String, Object>> selectByPKStr(@Param("databaseName")String database, @Param("tableName")String table,
-                                            @Param("pkStr")String pkStr,@Param("pkStrs")List<Object> pkStrs,
-                                            @Param("attchs")String attchs);
+    List<Map<String, Object>> selectByPKStr(@Param("databaseName") String database, @Param("tableName") String table,
+                                            @Param("pkStr") String pkStr, @Param("pkStrs") List<Object> pkStrs,
+                                            @Param("attchs") String attchs);
 
 }

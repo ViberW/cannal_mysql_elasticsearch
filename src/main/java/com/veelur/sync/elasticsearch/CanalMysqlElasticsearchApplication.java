@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch;
+package com.veelur.sync.elasticsearch;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -15,13 +15,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 @EnableScheduling
 @EnableTransactionManagement
-@MapperScan("com.star.sync.elasticsearch.dao")
-@ComponentScan({"com.star.sync.elasticsearch", "com.veelur.sync.elasticsearch"})
-public class CanalMysqlElasticsearchSyncApplication {
+@MapperScan("com.veelur.sync.elasticsearch.dao")
+public class CanalMysqlElasticsearchApplication {
 
     public static void main(String[] args) {
         //适用于初始版本  基于starcwang/canal_mysql_elasticsearch_sync重新定义的处理模块
-        SpringApplication.run(CanalMysqlElasticsearchSyncApplication.class, args);
+        SpringApplication.run(CanalMysqlElasticsearchApplication.class, args);
     }
 
 }

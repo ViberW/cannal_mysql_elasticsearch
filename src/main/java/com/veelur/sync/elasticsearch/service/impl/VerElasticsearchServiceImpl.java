@@ -1,14 +1,13 @@
 package com.veelur.sync.elasticsearch.service.impl;
 
-import com.star.sync.elasticsearch.util.JsonUtil;
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import com.veelur.sync.elasticsearch.config.ParamsConfig;
 import com.veelur.sync.elasticsearch.exception.ElasticErrorException;
 import com.veelur.sync.elasticsearch.model.ElasticResultEntity;
 import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
+import com.veelur.sync.elasticsearch.util.JsonUtils;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.*;
@@ -101,11 +100,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
 
             }
         }).setBulkActions(1000)
-                /*.setBulkSize(new ByteSizeValue(10, ByteSizeUnit.MB))*/
-                /*.setFlushInterval(TimeValue.timeValueSeconds(5))*/
                 .setConcurrentRequests(0)
                 .setBackoffPolicy(
-                        BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(3000), 3))
+                        BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(50), 3))
                 .build();
     }
 
@@ -123,6 +120,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
     /****************************************dada自定义方法****************************************/
     @Override
     public void checkAndSetIndex(String index, String type) {
+        if (!paramsConfig.getConvertNested()) {
+            return;
+        }
         IndicesAdminClient adminClient = transportClient.admin().indices();
         IndicesExistsRequest request = new IndicesExistsRequest(index);
         IndicesExistsResponse response = adminClient.exists(request).actionGet();
@@ -167,18 +167,16 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
             String source = responseStore.getSource().getSource();
             if (!bytes.trim().equals(source.trim())) {
                 logger.warn(name + "==============>当前保存的stored_script与当前不一致");
-                throw new ElasticErrorException("stored—script信息不匹配,请核实校验：" + name);
-                /*cluster.prepareDeleteStoredScript(name).get();
+                //throw new ElasticErrorException("stored—script信息不匹配,请核实校验：" + name);
+                cluster.prepareDeleteStoredScript(name).get();
                 cluster.preparePutStoredScript().setId(name)
-                    .setContent(new BytesArray(bytes), XContentType.JSON).get();*/
+                        .setContent(new BytesArray(bytes), XContentType.JSON).get();
             }
         }
     }
 
     @Override
     public void updateSet(String index, String type, String id, Map<String, Object> dataMap) {
-        /*transportClient.prepareUpdate(index, type, id).setDoc(dataMap)
-                .setRetryOnConflict(paramsConfig.getElasticRetryConflit()).setUpsert(dataMap);*/
         UpdateRequest updateRequest = new UpdateRequest(index, type, id)
                 .retryOnConflict(paramsConfig.getElasticRetryConflit())
                 .doc(dataMap).upsert(dataMap);
@@ -201,16 +199,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
         params.put("value", mainValue);
         params.put("key", mainKey);
         try {
-            /*transportClient.prepareUpdate(index, type, id).setRetryOnConflict(paramsConfig.getElasticRetryConflit())
-                    .setScript(new Script(ScriptType.STORED,
-                            null,
-                            BaseConstants.SCRIPT_UPDATE_LIST,
-                            params)).setUpsert(XContentFactory.jsonBuilder()
-                    .startObject().array(listName, dataMap).endObject()).get();
-        } catch (IOException e) {
-            logger.error("组建数据异常", e);
-            throw new ElasticErrorException(e.getMessage());
-        }*/
             UpdateRequest updateRequest = new UpdateRequest(index, type, id)
                     .retryOnConflict(paramsConfig.getElasticRetryConflit())
                     .upsert(XContentFactory.jsonBuilder()
@@ -240,16 +228,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
         params.put("value", mainValue);
         params.put("key", mainKey);
         try {
-            /*transportClient.prepareUpdate(index, type, id).setRetryOnConflict(paramsConfig.getElasticRetryConflit())
-                    .setScript(new Script(ScriptType.STORED,
-                            null,
-                            BaseConstants.SCRIPT_INSET_LIST,
-                            params)).setUpsert(XContentFactory.jsonBuilder()
-                    .startObject().array(listName, dataMap).endObject()).get();
-        } catch (IOException e) {
-            logger.error("组建数据异常", e);
-            throw new ElasticErrorException(e.getMessage());
-        }*/
             UpdateRequest updateRequest = new UpdateRequest(index, type, id)
                     .retryOnConflict(paramsConfig.getElasticRetryConflit())
                     .upsert(XContentFactory.jsonBuilder()
@@ -279,13 +257,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
         params.put("field", listName);
         params.put("value", mainValue);
         params.put("key", mainKey);
-        /*transportClient.prepareUpdate(index, type, id).setRetryOnConflict(paramsConfig.getElasticRetryConflit())
-                .setScript(new Script(
-                        ScriptType.STORED,
-                        null,
-                        BaseConstants.SCRIPT_DELETE_LIST,
-                        params))
-                .get();*/
         UpdateRequest updateRequest = new UpdateRequest(index, type, id)
                 .retryOnConflict(paramsConfig.getElasticRetryConflit())
                 .script(new Script(
@@ -304,16 +275,15 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
         try {
             BulkResponse bulkResponse = bulkRequestBuilder.execute().get();
             if (bulkResponse.hasFailures()) {
-                logger.error("elasticsearch批量插入错误, index=" + index + ", type=" + type + ", data=" + JsonUtil.toJson(idDataMap) + ", cause:" + bulkResponse.buildFailureMessage());
+                logger.error("elasticsearch批量插入错误, index=" + index + ", type=" + type + ", data=" + JsonUtils.toJson(idDataMap) + ", cause:" + bulkResponse.buildFailureMessage());
             }
         } catch (Exception e) {
-            logger.error("elasticsearch批量插入错误, index=" + index + ", type=" + type + ", data=" + JsonUtil.toJson(idDataMap), e);
+            logger.error("elasticsearch批量插入错误, index=" + index + ", type=" + type + ", data=" + JsonUtils.toJson(idDataMap), e);
         }
     }
 
     @Override
     public void deleteById(String index, String type, String id) {
-        //transportClient.prepareDelete(index, type, id).get();
         bulkProcessor.add(new DeleteRequest(index, type, id));
     }
 
@@ -321,12 +291,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
     public void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) {
         Map<String, Object> params = new HashMap<>();
         params.put("message", dataMap);
-        /*transportClient.prepareUpdate(index, type, id).setRetryOnConflict(paramsConfig.getElasticRetryConflit())
-                .setScript(new Script(
-                        ScriptType.STORED,
-                        null,
-                        BaseConstants.SCRIPT_DELETE_NULL,
-                        params)).get();*/
         UpdateRequest updateRequest = new UpdateRequest(index, type, id)
                 .retryOnConflict(paramsConfig.getElasticRetryConflit())
                 .script(new Script(

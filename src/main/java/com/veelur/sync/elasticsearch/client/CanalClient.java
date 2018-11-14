@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.client;
+package com.veelur.sync.elasticsearch.client;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;

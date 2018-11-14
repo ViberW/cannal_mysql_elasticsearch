@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.scheduling;
+package com.veelur.sync.elasticsearch.scheduling;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.client.CanalConnector;
@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;

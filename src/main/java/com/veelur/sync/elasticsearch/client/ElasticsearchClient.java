@@ -1,4 +1,4 @@
-package com.star.sync.elasticsearch.client;
+package com.veelur.sync.elasticsearch.client;
 
 import com.veelur.sync.elasticsearch.common.BaseConstants;
 import org.elasticsearch.client.transport.TransportClient;

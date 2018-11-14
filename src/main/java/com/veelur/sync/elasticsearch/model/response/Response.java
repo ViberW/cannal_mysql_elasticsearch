@@ -1,6 +1,7 @@
 package com.veelur.sync.elasticsearch.model.response;
 
-import com.star.sync.elasticsearch.util.JsonUtil;
+
+import com.veelur.sync.elasticsearch.util.JsonUtils;
 
 /**
  * @author <a href="mailto:wangchao.star@gmail.com">wangchao</a>
@@ -61,6 +62,6 @@ public class Response<T> {
 
     @Override
     public String toString() {
-        return JsonUtil.toJson(this);
+        return JsonUtils.toJson(this);
     }
 }

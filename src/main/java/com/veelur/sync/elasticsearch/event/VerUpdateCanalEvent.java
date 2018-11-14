@@ -1,7 +1,6 @@
 package com.veelur.sync.elasticsearch.event;
 
 import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
-import com.star.sync.elasticsearch.event.CanalEvent;
 
 /**
  * @author Veelur

@@ -1,7 +1,7 @@
 package com.veelur.sync.elasticsearch.model;
 
 
-import com.star.sync.elasticsearch.model.DatabaseTableModel;
+import com.veelur.sync.elasticsearch.model.base.DatabaseTableModel;
 
 import java.util.List;
 import java.util.Map;

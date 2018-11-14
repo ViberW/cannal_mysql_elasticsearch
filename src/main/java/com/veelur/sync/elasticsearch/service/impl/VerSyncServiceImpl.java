@@ -6,8 +6,8 @@ import com.veelur.sync.elasticsearch.config.ParamsConfig;
 import com.veelur.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
 import com.veelur.sync.elasticsearch.model.DatabaseModel;
-import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
 import com.veelur.sync.elasticsearch.model.ThreadExecModel;
+import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
 import com.veelur.sync.elasticsearch.model.request.SyncByIndexRequest;
 import com.veelur.sync.elasticsearch.service.VerElasticsearchService;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -109,7 +108,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
         maps = parseColumnsToMapList(maps, mainModel, false);
         Map<String, Map<String, Object>> mapList = maps.stream().collect(Collectors.toMap(o -> String.valueOf(o.get(pkStr)), o -> o));
         dealToEs(insetDataTables, mapList, pkStrs, request.getIndex(), request.getType());
-        logger.info("导入es信息第一次成功");
+        logger.info("初次同步es信息成功");
         poolDeals(mainModel, request, insetDataTables, maps.get(maps.size() - 1));
         return true;
     }
@@ -216,7 +215,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             dealToEs(insetDataTables, mapList, pkStrs, model.getIndex(), model.getType());
             count++;
         } while (_limit == maps.size());
-        logger.info("导入es信息成功,totalCount: {}", count);
+        logger.info("同步es信息成功,totalCount: {}", count);
     }
 
     private void dealToEs(List<VerDatabaseTableModel> models, Map<String, Map<String, Object>> mapList,
@@ -260,7 +259,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 //批量导入es中
                 verElasticsearchService.batchInsertById(index, type, mapList);
             } catch (Exception e) {
-                logger.error("处理导入es异常", e);
+                logger.error("同步导入es异常", e);
             }
         }
     }

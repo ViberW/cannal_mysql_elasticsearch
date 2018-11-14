@@ -121,7 +121,8 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
             //判定和是否为该值
             for (Map.Entry<String, String> entry : dbModel.getAttchs().entrySet()) {
                 if (!entry.getValue().equals(columns.stream().filter(column ->
-                        entry.getKey().equals(column.getName())).findFirst().orElse(null))) {
+                        entry.getKey().equals(column.getName())).findFirst()
+                        .orElse(CanalEntry.Column.getDefaultInstance()).getValue())) {
                     return;
                 }
             }

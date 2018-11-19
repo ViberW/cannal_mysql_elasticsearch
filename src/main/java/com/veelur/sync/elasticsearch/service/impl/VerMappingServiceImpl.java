@@ -83,7 +83,6 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         String exclude;
         String[] split;
         String attchstr;
-        String[] attchs;
         dbSingleMapping = HashBiMap.create();
 
         for (ConvertModel model : mappings) {

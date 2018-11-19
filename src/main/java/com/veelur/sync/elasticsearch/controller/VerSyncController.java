@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Description: {相关描述}
  */
 @RestController
-@RequestMapping("/veelur/sync")
+@RequestMapping("/ver/sync")
 public class VerSyncController {
     private static final Logger logger = LoggerFactory.getLogger(VerSyncController.class);
 

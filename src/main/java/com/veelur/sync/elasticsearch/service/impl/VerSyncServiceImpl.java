@@ -5,6 +5,7 @@ import com.veelur.sync.elasticsearch.common.MainTypeEnum;
 import com.veelur.sync.elasticsearch.config.ParamsConfig;
 import com.veelur.sync.elasticsearch.dao.BaseDao;
 import com.veelur.sync.elasticsearch.exception.InfoNotRightException;
+import com.veelur.sync.elasticsearch.model.AttchNode;
 import com.veelur.sync.elasticsearch.model.DatabaseModel;
 import com.veelur.sync.elasticsearch.model.ThreadExecModel;
 import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
@@ -52,6 +53,8 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
     @Autowired
     private ParamsConfig paramsConfig;
 
+    private HashMap<String, Map<String, String>> fields = new HashMap<>();
+
     @Override
     public void afterPropertiesSet() throws InfoNotRightException {
         if (paramsConfig.getThreadPoolSize() < 0 || paramsConfig.getThreadDownLatchSize() < 0) {
@@ -91,11 +94,12 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 0, request.getLimit(),
                 mainModel.getPkStr(), null, request.getOrderSign(),
                 convertParam(request.getStart(), request.getOrderType()),
-                convertParam(request.getEnd(), request.getOrderType()), buildAttchParams(mainModel));
+                convertParam(request.getEnd(), request.getOrderType()));
         if (CollectionUtils.isEmpty(maps)) {
             logger.info("获取信息完毕");
             return true;
         }
+        checkIsAttch(mainModel, maps);
         //查询其他的附表
         List<Object> pkStrs = new ArrayList<>();
         for (Map<String, Object> map : maps) {
@@ -111,16 +115,6 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
         logger.info("初次同步es信息成功");
         poolDeals(mainModel, request, insetDataTables, maps.get(maps.size() - 1));
         return true;
-    }
-
-    private String buildAttchParams(VerDatabaseTableModel model) {
-        Map<String, String> attchs = model.getAttchs();
-        if (CollectionUtils.isNotEmpty(attchs)) {
-            StringBuffer params = new StringBuffer();
-            attchs.forEach((key, val) -> params.append(key).append(" = ").append(val).append(" and "));
-            return params.substring(0, params.length() - 5);
-        }
-        return null;
     }
 
     private Object convertParam(String param, String orderType) throws InfoNotRightException {
@@ -194,11 +188,12 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 maps = baseDao.selectByPKWithPage(mainModel.getDatabase(), mainModel.getTable(),
                         0, _limit,
                         mainModel.getPkStr(), model.getPkValue(),
-                        model.getOrderSign(), model.getStart(), model.getEnd(), buildAttchParams(mainModel));
+                        model.getOrderSign(), model.getStart(), model.getEnd());
                 if (CollectionUtils.isEmpty(maps)) {
                     logger.info("获取信息完毕");
                     return;
                 }
+                checkIsAttch(mainModel, maps);
                 model.setPkValue(maps.get(maps.size() - 1).get(mainModel.getPkStr()));
             }
             //查询其他的附表
@@ -228,8 +223,9 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             oneToMore = MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain());
             try {
                 subMaps = baseDao.selectByPKStr(tableModel.getDatabase(), tableModel.getTable(),
-                        tableModel.getPkStr(), pkStrs, buildAttchParams(tableModel));
+                        tableModel.getPkStr(), pkStrs);
                 if (!CollectionUtils.isEmpty(subMaps)) {
+                    checkIsAttch(tableModel, subMaps);
                     subMaps = parseColumnsToMapList(subMaps, tableModel, true);
                     if (oneToMore) {
                         for (Map<String, Object> subMap : subMaps) {
@@ -308,7 +304,47 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
     }
 
     @Override
-    public String convertColumnAndEsName(String columnName, VerDatabaseTableModel dbModel) {
+    public boolean checkAttch(AttchNode node, Map<String, Object> map) {
+        if (null == node) {
+            return true;
+        }
+        boolean subContain;
+        if (node.getCheck()) {
+            Object o = map.get(node.getField());
+            if (null == o) {
+                return false;
+            }
+            subContain = node.getValues().contains(o.toString());
+        } else {
+            subContain = node.getEqual() == checkAttch(node.getCur(), map);
+        }
+        return node.getLogicAnd() ? subContain && checkAttch(node.getNext(), map)
+                : subContain || checkAttch(node.getNext(), map);
+    }
+
+    private List<Map<String, Object>> checkIsAttch(VerDatabaseTableModel dbModel,
+                                                   List<Map<String, Object>> results) {
+        if (CollectionUtils.isEmpty(results)) {
+            return results;
+        }
+        results = results.parallelStream().filter(stringObjectMap -> checkAttch(dbModel.getAttchs(), stringObjectMap)).collect(Collectors.toList());
+        return results;
+    }
+
+    @Override
+    public String convertColumnAndEsName(String columnName, VerDatabaseTableModel dbModel, String index) {
+        Map<String, String> map = fields.computeIfAbsent(index + BaseConstants.DEFAULT_RELATION + dbModel.getDatabase()
+                + BaseConstants.DEFAULT_RELATION + dbModel.getTable(), s -> new HashMap<>());
+        String s = map.getOrDefault(columnName, BaseConstants.DEFAULT_NA);
+        if (BaseConstants.DEFAULT_NA.equals(s)) {
+            //说明字段不存在
+            s = convertColumnAndEsName(columnName, dbModel);
+            map.put(columnName, s);
+        }
+        return s;
+    }
+
+    private String convertColumnAndEsName(String columnName, VerDatabaseTableModel dbModel) {
         if (StringUtils.isEmpty(columnName)) {
             return null;
         }

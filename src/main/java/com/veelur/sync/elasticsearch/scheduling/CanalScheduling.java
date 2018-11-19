@@ -60,6 +60,7 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
             try {
                 List<Entry> entries = message.getEntries();
                 if (batchId != -1 && entries.size() > 0) {
+                    verElasticsearchService.restart();
                     entries.forEach(entry -> {
                         if (entry.getEntryType() == EntryType.ROWDATA) {
                             publishCanalEvent(entry);
@@ -67,11 +68,14 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
                     });
                     //执行处理bulk中的请求
                     verElasticsearchService.flush();
-                    if (!verElasticsearchService.getResultEntity().getFlag()) {
+                    if (verElasticsearchService.getResultEntity().getError()) {
+                        throw new ElasticErrorException(verElasticsearchService.getResultEntity().getThrowable());
+                    }
+                    if (!verElasticsearchService.getResultEntity().getSuccess()) {
                         ElasticResultEntity resultEntity = verElasticsearchService.getResultEntity();
                         throw new ElasticErrorException("_traceId:" + resultEntity.getId() + ",resultEntity:" + JSON.toJSONString(resultEntity));
                     }
-                    logger.info("获取binlog信息条数" + entries.size());
+                    logger.info("当前获取binlog信息条数,size:" + entries.size());
                 }
                 canalConnector.ack(batchId);
             } catch (Exception e) {
@@ -101,15 +105,6 @@ public class CanalScheduling extends BasicWorker implements Runnable, Applicatio
     private void publishCanalEvent(Entry entry) {
         EventType eventType = entry.getHeader().getEventType();
         switch (eventType) {
-            /*case INSERT:
-                applicationContext.publishEvent(new VerInsertCanalEvent(entry));
-                break;
-            case UPDATE:
-                applicationContext.publishEvent(new VerUpdateCanalEvent(entry));
-                break;
-            case DELETE:
-                applicationContext.publishEvent(new VerDeleteCanalEvent(entry));
-                break;*/
             case INSERT:
                 applicationContext.publishEvent(new VerInsertCanalEvent(entry));
                 break;

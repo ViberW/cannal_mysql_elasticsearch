@@ -13,6 +13,8 @@ public interface VerElasticsearchService {
 
     ElasticResultEntity getResultEntity();
 
+    void restart();
+
     void flush();
 
     void checkAndSetIndex(String index, String type);

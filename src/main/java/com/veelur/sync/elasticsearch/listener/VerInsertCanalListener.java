@@ -29,7 +29,7 @@ public class VerInsertCanalListener extends VerAbstractCanalListener<VerInsertCa
     protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                           List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         //构建元数据map
-        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, null);
+        Map<String, Object> dataMap = parseColumnsToMap(esModel.getIndex(),dbModel, columns, null);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中

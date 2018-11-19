@@ -14,7 +14,8 @@ public class DbConvertModel {
     private String exclude;
     private String pkstr;
     private Integer main;
-    private String listkv;
+    private String listname;
+    private String listkey;
     private String attchstr;
     private Map<String, String> convert;
 
@@ -74,12 +75,20 @@ public class DbConvertModel {
         this.convert = convert;
     }
 
-    public String getListkv() {
-        return listkv;
+    public String getListname() {
+        return listname;
     }
 
-    public void setListkv(String listkv) {
-        this.listkv = listkv;
+    public void setListname(String listname) {
+        this.listname = listname;
+    }
+
+    public String getListkey() {
+        return listkey;
+    }
+
+    public void setListkey(String listkey) {
+        this.listkey = listkey;
     }
 
     public String getAttchstr() {

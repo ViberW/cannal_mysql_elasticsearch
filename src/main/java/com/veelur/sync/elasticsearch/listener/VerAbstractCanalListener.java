@@ -8,7 +8,6 @@ import com.veelur.sync.elasticsearch.model.VerDatabaseTableModel;
 import com.veelur.sync.elasticsearch.model.VerIndexTypeModel;
 import com.veelur.sync.elasticsearch.service.VerMappingService;
 import com.veelur.sync.elasticsearch.service.VerSyncService;
-import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author: veelur
@@ -55,14 +55,14 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
         change.getRowDatasList().forEach(rowData -> dealSync(dbModel, esModel, rowData));
     }
 
-    protected Map<String, Object> parseColumnsToMap(VerDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
+    protected Map<String, Object> parseColumnsToMap(String index, VerDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
                                                     Map<String, Object> updateMap) {
         Map<String, Object> jsonMap = new HashMap<>();
         columns.forEach(column -> {
             if (column == null) {
                 return;
             }
-            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel);
+            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel, index);
             if (StringUtils.isNotEmpty(esField)) {
                 Object value = column.getIsNull() ? null : verMappingService.getElasticsearchTypeObject(column.getMysqlType(), column.getValue());
                 jsonMap.put(esField, value);
@@ -74,7 +74,7 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
         return jsonMap;
     }
 
-    protected Map<String, Object> parseColumnsToNullMap(VerDatabaseTableModel dbModel,
+    protected Map<String, Object> parseColumnsToNullMap(String index, VerDatabaseTableModel dbModel,
                                                         List<CanalEntry.Column> columns) {
         Map<String, Object> jsonMap = new HashMap<>();
         String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
@@ -82,7 +82,7 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
             if (column == null) {
                 return;
             }
-            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel);
+            String esField = verSyncService.convertColumnAndEsName(column.getName(), dbModel, index);
             if (!primaryKey.equals(column.getName()) && StringUtils.isNotEmpty(esField)) {
                 jsonMap.put(esField, null);
             }
@@ -117,14 +117,13 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
                     ",pkStr=" + dbModel.getPkStr());
             return;
         }
-        if (CollectionUtils.isNotEmpty(dbModel.getAttchs())) {
+        if (null != dbModel.getAttchs()) {
             //判定和是否为该值
-            for (Map.Entry<String, String> entry : dbModel.getAttchs().entrySet()) {
-                if (!entry.getValue().equals(columns.stream().filter(column ->
-                        entry.getKey().equals(column.getName())).findFirst()
-                        .orElse(CanalEntry.Column.getDefaultInstance()).getValue())) {
-                    return;
-                }
+            Map<String, Object> map = columns.stream().filter(column ->
+                    dbModel.getAttchKeys().contains(column.getName())).collect(
+                    Collectors.toMap(CanalEntry.Column::getName, CanalEntry.Column::getValue, (s, s2) -> s));
+            if (!verSyncService.checkAttch(dbModel.getAttchs(), map)) {
+                return;
             }
         }
         doSync(dbModel, esModel, columns, idColumn);

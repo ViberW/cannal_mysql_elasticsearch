@@ -12,4 +12,8 @@ public class ElasticErrorException extends RuntimeException {
     public ElasticErrorException(String message) {
         super(message);
     }
+
+    public ElasticErrorException(Throwable cause) {
+        super(cause);
+    }
 }

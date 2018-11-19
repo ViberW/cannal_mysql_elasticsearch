@@ -17,12 +17,14 @@ public class ParamsConfig {
     private Integer threadPoolSize;
     @Value("${thread.size.down-latch:10}")
     private Integer threadDownLatchSize;
-    @Value("${elasticsearch.retry.conflit:3}")
+    @Value("${elasticsearch.index.retry-conflit:3}")
     private Integer elasticRetryConflit;
-    @Value("${elasticsearch.index.number_of_shards:3}")
+    @Value("${elasticsearch.index.number-of-shards:3}")
     private Integer elasticIndexNumOfShards;
-    @Value("${elasticsearch.index.number_of_replicas:2}")
+    @Value("${elasticsearch.index.number-of-replicas:2}")
     private Integer elasticIndexNumOfReplicas;
+    @Value("${elasticsearch.index.bulk-action-size:2000}")
+    private Integer bulkActionSize;
     @Value("${elasticsearch.index.convert-nested:true}")
     private Boolean convertNested;
 
@@ -72,6 +74,14 @@ public class ParamsConfig {
 
     public void setElasticIndexNumOfReplicas(Integer elasticIndexNumOfReplicas) {
         this.elasticIndexNumOfReplicas = elasticIndexNumOfReplicas;
+    }
+
+    public Integer getBulkActionSize() {
+        return bulkActionSize;
+    }
+
+    public void setBulkActionSize(Integer bulkActionSize) {
+        this.bulkActionSize = bulkActionSize;
     }
 
     public Boolean getConvertNested() {

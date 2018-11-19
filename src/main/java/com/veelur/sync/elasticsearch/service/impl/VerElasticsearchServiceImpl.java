@@ -65,15 +65,15 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
             @Override
             public void beforeBulk(long executionId,
                                    BulkRequest request) {
-                resultEntity.setExecutionId(executionId);
+                resultEntity.getExecutionIds().add(executionId);
             }
 
             @Override
             public void afterBulk(long executionId,
                                   BulkRequest request,
                                   BulkResponse response) {
-                int errorCount = 0;
                 if (response.hasFailures()) {
+                    int errorCount = 0;
                     for (BulkItemResponse bulkItemResponse : response.getItems()) {
                         if (bulkItemResponse.isFailed()) {
                             BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
@@ -82,10 +82,9 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
                             }
                             errorCount++;
                             logger.error("_traceId:" + resultEntity.getId() + ",操作elastic错误", failure.getCause());
-                            //添加到日志记录
                         }
                     }
-                    resultEntity.setFlag(errorCount == 0);
+                    resultEntity.setSuccess(resultEntity.getSuccess() && errorCount == 0);
                     resultEntity.setMessage("错误的信息条数为：" + errorCount);
                 }
             }
@@ -94,12 +93,12 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
             public void afterBulk(long executionId,
                                   BulkRequest request,
                                   Throwable failure) {
-                resultEntity.setFlag(false);
-                logger.error("执行处理批量elastic,executionId:" + executionId, failure);
-                //添加日志记录
-
+                resultEntity.setSuccess(false);
+                resultEntity.setError(true);
+                resultEntity.setThrowable(failure);
+                logger.error("_traceId:" + resultEntity.getId() + ",执行处理批量elastic,executionId:" + executionId, failure);
             }
-        }).setBulkActions(1000)
+        }).setBulkActions(paramsConfig.getBulkActionSize())
                 .setConcurrentRequests(0)
                 .setBackoffPolicy(
                         BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(50), 3))
@@ -108,12 +107,16 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
 
     @Override
     public void destroy() throws Exception {
-        bulkProcessor.awaitClose(4000, TimeUnit.MILLISECONDS);
+        bulkProcessor.awaitClose(3000, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void restart() {
+        resultEntity.restart();
     }
 
     @Override
     public void flush() {
-        resultEntity.restart();
         bulkProcessor.flush();
     }
 
@@ -154,8 +157,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
         checkStoredScript(cluster, BaseConstants.SCRIPT_DELETE_LIST, "{\"script\":{\"lang\":\"painless\"," +
                 "\"source\":\"if(ctx._source.containsKey(params.field))" +
                 "{ctx._source.get(params.field).removeIf(item -> item.get(params.key) == params.value)}\"}}");
-        checkStoredScript(cluster, BaseConstants.SCRIPT_DELETE_NULL, "{\"script\":{\"lang\":\"painless\"," +
-                "\"source\":\"if(ctx._source !=null && !ctx._source.isEmpty())ctx._source.putAll(params.message)\"}}");
     }
 
     private void checkStoredScript(ClusterAdminClient cluster, String name, String bytes) {
@@ -178,8 +179,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
     @Override
     public void updateSet(String index, String type, String id, Map<String, Object> dataMap) {
         UpdateRequest updateRequest = new UpdateRequest(index, type, id)
-                .retryOnConflict(paramsConfig.getElasticRetryConflit())
-                .doc(dataMap).upsert(dataMap);
+                .retryOnConflict(paramsConfig.getElasticRetryConflit()).upsert(dataMap);
         bulkProcessor.add(updateRequest);
     }
 
@@ -289,15 +289,6 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
 
     @Override
     public void deleteByQuerySet(String index, String type, String id, Map<String, Object> dataMap) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("message", dataMap);
-        UpdateRequest updateRequest = new UpdateRequest(index, type, id)
-                .retryOnConflict(paramsConfig.getElasticRetryConflit())
-                .script(new Script(
-                        ScriptType.STORED,
-                        null,
-                        BaseConstants.SCRIPT_DELETE_NULL,
-                        params));
-        bulkProcessor.add(updateRequest);
+        bulkProcessor.add(new UpdateRequest(index, type, id).doc(dataMap));
     }
 }

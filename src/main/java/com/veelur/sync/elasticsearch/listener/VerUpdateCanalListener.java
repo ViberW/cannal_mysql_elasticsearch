@@ -30,7 +30,7 @@ public class VerUpdateCanalListener extends VerAbstractCanalListener<VerUpdateCa
     protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                           List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         Map<String, Object> updateMap = new HashMap<>();
-        Map<String, Object> dataMap = parseColumnsToMap(dbModel, columns, updateMap);
+        Map<String, Object> dataMap = parseColumnsToMap(esModel.getIndex(), dbModel, columns, updateMap);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //更新入嵌套数组中

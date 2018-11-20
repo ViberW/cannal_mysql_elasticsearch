@@ -16,6 +16,7 @@ import com.veelur.sync.elasticsearch.service.VerSyncService;
 import com.veelur.sync.elasticsearch.util.CollectionUtils;
 import com.veelur.sync.elasticsearch.util.DateUtils;
 import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -254,6 +255,9 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
                 }
                 //批量导入es中
                 verElasticsearchService.batchInsertById(index, type, mapList);
+            } catch (VersionConflictEngineException e) {
+                logger.warn("全量同步版本冲突", e);
+                dealToEs(models, mapList, pkStrs, index, type);
             } catch (Exception e) {
                 logger.error("同步导入es异常", e);
             }

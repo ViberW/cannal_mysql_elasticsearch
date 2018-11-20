@@ -179,7 +179,7 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
     @Override
     public void updateSet(String index, String type, String id, Map<String, Object> dataMap) {
         UpdateRequest updateRequest = new UpdateRequest(index, type, id)
-                .retryOnConflict(paramsConfig.getElasticRetryConflit()).upsert(dataMap);
+                .retryOnConflict(paramsConfig.getElasticRetryConflit()).doc(dataMap).upsert(dataMap);
         bulkProcessor.add(updateRequest);
     }
 
@@ -271,7 +271,8 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService, Ini
     @Override
     public void batchInsertById(String index, String type, Map<String, Map<String, Object>> idDataMap) {
         BulkRequestBuilder bulkRequestBuilder = transportClient.prepareBulk();
-        idDataMap.forEach((id, dataMap) -> bulkRequestBuilder.add(transportClient.prepareIndex(index, type, id).setSource(dataMap)));
+        idDataMap.forEach((id, dataMap) -> bulkRequestBuilder.add(new UpdateRequest(index, type, id)
+                .retryOnConflict(paramsConfig.getElasticRetryConflit()).doc(dataMap).upsert(dataMap)));
         try {
             BulkResponse bulkResponse = bulkRequestBuilder.execute().get();
             if (bulkResponse.hasFailures()) {

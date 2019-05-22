@@ -10,6 +10,7 @@ import com.veelur.sync.common.model.AttchNode;
 import com.veelur.sync.common.model.DatabaseModel;
 import com.veelur.sync.common.model.ThreadExecModel;
 import com.veelur.sync.common.model.VerDatabaseTableModel;
+import com.veelur.sync.common.model.base.DatabaseTableModel;
 import com.veelur.sync.common.model.request.SyncByIndexRequest;
 import com.veelur.sync.common.util.CollectionUtils;
 import com.veelur.sync.common.util.DateUtils;
@@ -51,6 +52,7 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
     @Autowired
     private ParamsConfig paramsConfig;
 
+
     @Autowired
     private BaseDaoSupportCache baseDaoSupportCache;
 
@@ -81,6 +83,17 @@ public class VerSyncServiceImpl implements VerSyncService, InitializingBean, Dis
             logger.info("当前mapping信息错误");
             return false;
         }
+        DatabaseTableModel mainModel = models.stream().filter(column ->
+                null != column.getMain() && MainTypeEnum.MAIN.getCode().equals(column.getMain()))
+                .findFirst().orElse(null);
+        if (null == mainModel) {
+            logger.info("当前mapping信息没有main数据");
+            return false;
+        }
+        /*if (baseCache.startAllSync(request.getIndex())) {
+            logger.info("当前已经存在处理该索引的全量同步");
+            return false;
+        }*/
         //根据对应的多个database获取数据
         VerDatabaseTableModel mainModel = models.stream().filter(column ->
                 null != column.getMain() && MainTypeEnum.MAIN.getCode().equals(column.getMain()))

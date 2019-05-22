@@ -4,6 +4,7 @@ import com.veelur.sync.common.model.ConnectModel;
 import com.veelur.sync.common.model.DatabaseModel;
 import com.veelur.sync.common.model.VerIndexTypeModel;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -22,7 +23,7 @@ public interface VerMappingService {
      */
     Object getElasticsearchTypeObject(String mysqlType, String data);
 
-    ConnectModel getColumnWithData(String database, String table);
+    List<ConnectModel> getColumnWithData(String database, String table);
 
     DatabaseModel getDatabaseWithIndexType(String index, String type);
 

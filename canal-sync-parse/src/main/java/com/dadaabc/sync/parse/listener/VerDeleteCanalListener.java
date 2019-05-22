@@ -6,11 +6,13 @@ import com.veelur.sync.common.constant.MainTypeEnum;
 import com.veelur.sync.common.model.VerDatabaseTableModel;
 import com.veelur.sync.common.model.VerIndexTypeModel;
 import com.dadaabc.sync.parse.service.VerElasticsearchService;
+import org.elasticsearch.index.engine.DocumentMissingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,15 +29,25 @@ public class VerDeleteCanalListener extends VerAbstractCanalListener<VerDeleteCa
     private VerElasticsearchService verElasticsearchService;
 
     @Override
+    protected List<CanalEntry.Column> getColumns(CanalEntry.RowData rowData) {
+        return rowData.getBeforeColumnsList();
+    }
+
+    @Override
     protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                           List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         Integer main = dbModel.getMain();
         if (MainTypeEnum.MAIN.getCode().equals(main)) {
             verElasticsearchService.deleteById(esModel.getIndex(), esModel.getType(), idColumn.getValue());
         } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main)) {
-            //删除es中的部分字段信息,置为null
             Map<String, Object> dataMap = parseColumnsToNullMap(esModel.getIndex(), dbModel, columns);
-            verElasticsearchService.deleteByQuerySet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+            if (dbModel.getAddition()) {
+                verElasticsearchService.deleteByQuerySet(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                        Collections.singletonMap(dbModel.getAdditionField(), dataMap));
+            } else {
+                //删除es中的部分字段信息,置为null
+                verElasticsearchService.deleteByQuerySet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
+            }
         } else if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //将对应的mapping的信息删除
             Map<String, Object> dataMap = new HashMap<>();

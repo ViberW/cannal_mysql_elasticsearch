@@ -18,6 +18,7 @@ public class DbConvertModel {
     private String listkey;
     private String attchstr;
     private Map<String, String> convert;
+    private String datasource;
 
     public String getDatabase() {
         return database;
@@ -97,5 +98,13 @@ public class DbConvertModel {
 
     public void setAttchstr(String attchstr) {
         this.attchstr = attchstr;
+    }
+
+    public String getDatasource() {
+        return datasource;
+    }
+
+    public void setDatasource(String datasource) {
+        this.datasource = datasource;
     }
 }

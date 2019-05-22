@@ -7,7 +7,7 @@ package com.veelur.sync.common.constant;
  */
 public enum MainTypeEnum {
 
-    MAIN(1, "自身"), ONE_TO_ONE(2, "1对1"), ONE_TO_MORE(3, "1对n");
+    MAIN(1, "自身"), ONE_TO_ONE(2, "1对1"), ONE_TO_OBJECT(3, "1对object"), ONE_TO_MORE(4, "1对n");
 
     private Integer code;
 

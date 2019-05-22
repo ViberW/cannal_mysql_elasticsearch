@@ -38,12 +38,12 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
         CanalEntry.Entry entry = event.getEntry();
         String database = entry.getHeader().getSchemaName();
         String table = entry.getHeader().getTableName();
-        ConnectModel connectModel = verMappingService.getColumnWithData(database, table);
-        if (connectModel == null) {
+        List<ConnectModel> connectModels = verMappingService.getColumnWithData(database, table);
+        if (null == connectModels) {
             return;
         }
-        VerDatabaseTableModel dbModel = connectModel.getDbModel();
-        VerIndexTypeModel esModel = connectModel.getEsModel();
+      /*  VerDatabaseTableModel dbModel = connectModel.getDbModel();
+        VerIndexTypeModel esModel = connectModel.getEsModel();*/
         CanalEntry.RowChange change;
         try {
             change = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -52,7 +52,11 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
             return;
         }
         // 封装model
-        change.getRowDatasList().forEach(rowData -> dealSync(dbModel, esModel, rowData));
+        change.getRowDatasList().forEach(rowData -> {
+            for (ConnectModel connectModel : connectModels) {
+                dealSync(connectModel.getDbModel(), connectModel.getEsModel(), getColumns(rowData));
+            }
+        });
     }
 
     protected Map<String, Object> parseColumnsToMap(String index, VerDatabaseTableModel dbModel, List<CanalEntry.Column> columns,
@@ -104,10 +108,9 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
      *
      * @param dbModel
      * @param esModel
-     * @param rowData
+     * @param columns
      */
-    protected void dealSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, CanalEntry.RowData rowData) {
-        List<CanalEntry.Column> columns = rowData.getBeforeColumnsList();
+    protected void dealSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel, List<CanalEntry.Column> columns) {
         String primaryKey = Optional.ofNullable(dbModel.getPkStr()).orElse("id");
         CanalEntry.Column idColumn = columns.stream().filter(column ->
                 primaryKey.equals(column.getName())).findFirst().orElse(null);
@@ -128,6 +131,8 @@ public abstract class VerAbstractCanalListener<EVENT extends CanalEvent> impleme
         }
         doSync(dbModel, esModel, columns, idColumn);
     }
+
+    protected abstract List<CanalEntry.Column> getColumns(CanalEntry.RowData rowData);
 
     protected abstract void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                                    List<CanalEntry.Column> columns, CanalEntry.Column idColumn);

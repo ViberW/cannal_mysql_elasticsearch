@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,15 +27,23 @@ public class VerInsertCanalListener extends VerAbstractCanalListener<VerInsertCa
     private VerElasticsearchService verElasticsearchService;
 
     @Override
+    protected List<CanalEntry.Column> getColumns(CanalEntry.RowData rowData) {
+        return rowData.getAfterColumnsList();
+    }
+
+    @Override
     protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                           List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         //构建元数据map
-        Map<String, Object> dataMap = parseColumnsToMap(esModel.getIndex(),dbModel, columns, null);
+        Map<String, Object> dataMap = parseColumnsToMap(esModel.getIndex(), dbModel, columns, null);
         Integer main = dbModel.getMain();
         if (MainTypeEnum.ONE_TO_MORE.getCode().equals(main)) {
             //放入嵌套数组中
             verElasticsearchService.insertList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
                     dataMap, dbModel.getListname(), dbModel.getMainKey());
+        } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main) && dbModel.getAddition()) {
+            verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    Collections.singletonMap(dbModel.getAdditionField(), dataMap));
         } else {
             verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

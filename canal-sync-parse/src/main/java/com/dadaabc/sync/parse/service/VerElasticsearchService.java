@@ -1,5 +1,6 @@
 package com.dadaabc.sync.parse.service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Map;
  */
 public interface VerElasticsearchService {
 
-    void checkAndSetIndex(String index, String type);
+    void checkAndSetIndex(String index, String type, Map<String, List<String>> fields);
 
     void checkAndSetStoredScript();
 

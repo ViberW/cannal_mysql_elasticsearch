@@ -26,12 +26,12 @@ public class PostInitService implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         //初始化script
         elasticsearchService.checkAndSetStoredScript();
-        //初始化索引的分片
+        /*//初始化索引的分片
         Set<VerIndexTypeModel> indexTypeModels = mappingService.getIndexTypeModels();
         if (CollectionUtils.isNotEmpty(indexTypeModels)) {
             for (VerIndexTypeModel model : indexTypeModels) {
                 elasticsearchService.checkAndSetIndex(model.getIndex(), model.getType());
             }
-        }
+        }*/
     }
 }

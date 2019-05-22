@@ -3,12 +3,14 @@ package com.dadaabc.sync.parse.service.impl;
 import com.dadaabc.sync.parse.service.VerElasticsearchService;
 import com.veelur.sync.common.constant.BaseConstants;
 import com.veelur.sync.common.exception.ElasticErrorException;
+import com.veelur.sync.common.util.CollectionUtils;
 import com.veelur.sync.common.util.JsonUtils;
 import com.veelur.sync.component.config.ParamsConfig;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -16,7 +18,9 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.ClusterAdminClient;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -28,7 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,22 +54,68 @@ public class VerElasticsearchServiceImpl implements VerElasticsearchService {
 
     /****************************************dada自定义方法****************************************/
     @Override
-    public void checkAndSetIndex(String index, String type) {
-        if (!paramsConfig.getConvertNested()) {
-            return;
-        }
+    public void checkAndSetIndex(String index, String type, Map<String, List<String>> fields) {
         IndicesAdminClient adminClient = transportClient.admin().indices();
         IndicesExistsRequest request = new IndicesExistsRequest(index);
         IndicesExistsResponse response = adminClient.exists(request).actionGet();
         if (response.isExists()) {
-            return;
+            try {
+                StringBuffer sbuffer = new StringBuffer("{\"properties\":{");
+                GetMappingsResponse getMappingsResponse = adminClient.prepareGetMappings().addIndices(index).setTypes(type).get();
+                ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = getMappingsResponse.getMappings();
+                MappingMetaData mappingMetaData = mappings.get(index).get(type);
+                Map<String, Map<String, String>> properties = (Map<String, Map<String, String>>) mappingMetaData.getSourceAsMap().get("properties");
+                if (null == properties) {
+                    properties = Collections.emptyMap();
+                }
+                boolean flag = false;
+                if (CollectionUtils.isNotEmpty(fields)) {
+                    for (Map.Entry<String, List<String>> entry : fields.entrySet()) {
+                        if (CollectionUtils.isNotEmpty(entry.getValue())) {
+                            for (String str : entry.getValue()) {
+                                Map<String, String> stringStringMap = properties.get(str);
+                                if (null == stringStringMap) {
+                                    //需要设置
+                                    flag = true;
+                                    sbuffer.append("\"").append(str).append("\"").append(":{\"type\":\"" + entry.getKey() + "\"},");
+                                }
+                            }
+                        }
+                    }
+                }
+                //更新列表
+                sbuffer.deleteCharAt(sbuffer.length() - 1);
+                sbuffer.append("}}");
+                if (!flag) return;
+                //更新mapping
+                adminClient.preparePutMapping(index).setType(type).setSource(sbuffer.toString(), XContentType.JSON).get();
+            } catch (Exception e) {
+                logger.warn("elastic==============>当前更新字段有误与当前不一致" + e.getMessage());
+            }
+        } else {
+            StringBuffer sbuffer = new StringBuffer("{\"properties\":{");
+            boolean flag = false;
+            if (CollectionUtils.isNotEmpty(fields)) {
+                for (Map.Entry<String, List<String>> entry : fields.entrySet()) {
+                    if (CollectionUtils.isNotEmpty(entry.getValue())) {
+                        for (String str : entry.getValue()) {
+                            flag = true;
+                            sbuffer.append("\"").append(str).append("\"").append(":{\"type\":\"" + entry.getKey() + "\"},");
+                        }
+                    }
+                }
+            }
+            sbuffer.deleteCharAt(sbuffer.length() - 1);
+            sbuffer.append("}}");
+            if (!flag) return;
+            adminClient.prepareCreate(index).setSettings(Settings.builder().put("index.number_of_shards",
+                    paramsConfig.getElasticIndexNumOfShards())
+                    .put("index.number_of_replicas", paramsConfig.getElasticIndexNumOfReplicas()))
+                    /*.addMapping(type,
+                            "{\"dynamic_templates\":[{\"nested\":{\"match_mapping_type\": \"object\"," +
+                                    "\"mapping\":{\"type\":\"nested\"}}}]}", XContentType.JSON)*/
+                    .addMapping(type, sbuffer.toString(), XContentType.JSON).get();
         }
-        adminClient.prepareCreate(index).setSettings(Settings.builder().put("index.number_of_shards",
-                paramsConfig.getElasticIndexNumOfShards())
-                .put("index.number_of_replicas", paramsConfig.getElasticIndexNumOfReplicas()))
-                .addMapping(type,
-                        "{\"dynamic_templates\":[{\"nested\":{\"match_mapping_type\": \"object\"," +
-                                "\"mapping\":{\"type\":\"nested\"}}}]}", XContentType.JSON).get();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.dadaabc.sync.parse.service.impl;
 
+import com.dadaabc.sync.parse.service.VerElasticsearchService;
 import com.dadaabc.sync.parse.service.VerMappingService;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -8,10 +9,13 @@ import com.veelur.sync.common.constant.BaseConstants;
 import com.veelur.sync.common.constant.MainTypeEnum;
 import com.veelur.sync.common.exception.InfoNotRightException;
 import com.veelur.sync.common.model.*;
+import com.veelur.sync.common.model.base.DatabaseTableModel;
 import com.veelur.sync.common.util.CollectionUtils;
 import com.veelur.sync.common.util.DateUtils;
+import com.veelur.sync.dao.MapperEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +34,8 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
 
     private List<ConvertModel> mappings = new ArrayList<>();
 
+    @Autowired
+    private VerElasticsearchService verElasticsearchService;
 
     public List<ConvertModel> getMappings() {
         return mappings;
@@ -41,7 +47,7 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
 
     private BiMap<DatabaseModel, VerIndexTypeModel> dbEsBiMapping;
     private Map<String, VerMappingServiceImpl.Converter> mysqlTypeElasticsearchTypeMapping;
-    private BiMap<VerDatabaseTableModel, ConnectModel> dbSingleMapping;
+    private BiMap<DatabaseTableModel, List<ConnectModel>> dbSingleMapping;
 
     @Override
     public DatabaseModel getDatabaseWithIndexType(String index, String type) {
@@ -49,7 +55,7 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
     }
 
     @Override
-    public ConnectModel getColumnWithData(String database, String table) {
+    public List<ConnectModel> getColumnWithData(String database, String table) {
         return dbSingleMapping.get(new VerDatabaseTableModel(database, table));
     }
 
@@ -84,29 +90,57 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         String[] split;
         String attchstr;
         dbSingleMapping = HashBiMap.create();
-
+        Map<VerIndexTypeModel, Map<String, List<String>>> objectAndNeteds = new HashMap<>();
         for (ConvertModel model : mappings) {
             boolean havaMain = false;
             verIndexTypeModel = new VerIndexTypeModel();
             verIndexTypeModel.setIndex(model.getIndex());
             verIndexTypeModel.setType(model.getType());
+            //
+            Map<String, List<String>> objectAndNested = new HashMap<>();
+            List<String> initObjects = new ArrayList<>();
+            objectAndNested.put("object", initObjects);
+            List<String> initNesteds = new ArrayList<>();
+            objectAndNested.put("nested", initNesteds);
+            objectAndNeteds.put(verIndexTypeModel, objectAndNested);
             //获取数据库
             databaseModel = new DatabaseModel();
             List<DbConvertModel> dbs = model.getDbs();
             models = new ArrayList<>();
             for (DbConvertModel dbConvertModel : dbs) {
                 tableModel = new VerDatabaseTableModel();
+                if (StringUtils.isEmpty(dbConvertModel.getDatabase())
+                        || StringUtils.isEmpty(dbConvertModel.getTable())) {
+                    throw new InfoNotRightException("请核实elastic索引" + model.getIndex() + "内库名和表名");
+                }
                 tableModel.setDatabase(dbConvertModel.getDatabase());
                 tableModel.setTable(dbConvertModel.getTable());
+                if (models.contains(tableModel)) {
+                    throw new InfoNotRightException("同一个索引下包含相同的库表信息,database:" + dbConvertModel.getDatabase() + ",table:" + dbConvertModel.getTable());
+                }
+                models.add(tableModel);
                 tableModel.setMain(null != dbConvertModel.getMain() ? dbConvertModel.getMain() : MainTypeEnum.MAIN.getCode());
                 if (havaMain && MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
                     throw new InfoNotRightException("包含重复的mapping-main信息");
+                }
+                /*if (StringUtils.isNotBlank(dbConvertModel.getYears())) {
+                    String years = dbConvertModel.getYears();
+                    String[] yearList = years.split(BaseConstants.DEFAULT_SPLIT);
+                    if (yearList.length != 0) {
+                        tableModel.setYears(Arrays.asList(yearList));
+                    }
+                }*/
+                if (MainTypeEnum.ONE_TO_OBJECT.getCode().equals(tableModel.getMain())) {
+                    tableModel.setAddition(true);
+                    tableModel.setAdditionField(StringUtils.isBlank(dbConvertModel.getListname()) ? dbConvertModel.getTable() : dbConvertModel.getListname());
+                    initObjects.add(tableModel.getAdditionField());
                 }
                 if (MainTypeEnum.ONE_TO_MORE.getCode().equals(tableModel.getMain())) {
                     String listname = dbConvertModel.getListname();
                     String listkey = dbConvertModel.getListkey();
                     tableModel.setListname(StringUtils.isNotEmpty(listname) ? listname : tableModel.getTable());
                     tableModel.setMainKey(StringUtils.isNotEmpty(listkey) ? listkey : BaseConstants.DEFAULT_ID);
+                    initNesteds.add(tableModel.getListname());
                 }
                 tableModel.setPkStr(StringUtils.isEmpty(dbConvertModel.getPkstr()) ? BaseConstants.DEFAULT_ID : dbConvertModel.getPkstr());
                 include = dbConvertModel.getInclude();
@@ -119,8 +153,10 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
                     split = exclude.split(BaseConstants.DEFAULT_SPLIT);
                     tableModel.setExcludeField(Arrays.asList(split));
                 }
+                if (MapperEnum.contain(dbConvertModel.getDatasource())) {
+                    tableModel.setDatasource(dbConvertModel.getDatasource());
+                }
                 tableModel.setConvert(dbConvertModel.getConvert());
-                models.add(tableModel);
                 if (MainTypeEnum.MAIN.getCode().equals(tableModel.getMain())) {
                     havaMain = true;
                     if (StringUtils.isEmpty(verIndexTypeModel.getIndex())) {
@@ -143,11 +179,23 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
                 connectModel = new ConnectModel();
                 connectModel.setDbModel(tableModel);
                 connectModel.setEsModel(verIndexTypeModel);
-                dbSingleMapping.put(tableModel, connectModel);
+//                dbSingleMapping.put(tableModel, dadaConnectModel);
+                List<ConnectModel> dadaConnectModels = dbSingleMapping
+                        .computeIfAbsent(new DatabaseTableModel(tableModel.getDatabase(), tableModel.getTable()),
+                                databaseTableModel -> new ArrayList<>());
+                dadaConnectModels.add(connectModel);
             }
             databaseModel.setModels(models);
             dbEsBiMapping.put(databaseModel, verIndexTypeModel);
         }
+        for (Map.Entry<VerIndexTypeModel, Map<String, List<String>>> entry : objectAndNeteds.entrySet()) {
+            if (CollectionUtils.isNotEmpty(entry.getValue())) {
+                VerIndexTypeModel key = entry.getKey();
+                //初始化object字段
+                verElasticsearchService.checkAndSetIndex(key.getIndex(), key.getType(), entry.getValue());
+            }
+        }
+
         mysqlTypeElasticsearchTypeMapping = Maps.newHashMap();
         mysqlTypeElasticsearchTypeMapping.put("char", data -> data);
         mysqlTypeElasticsearchTypeMapping.put("text", data -> data);
@@ -158,6 +206,7 @@ public class VerMappingServiceImpl implements VerMappingService, InitializingBea
         mysqlTypeElasticsearchTypeMapping.put("float", Double::valueOf);
         mysqlTypeElasticsearchTypeMapping.put("double", Double::valueOf);
         mysqlTypeElasticsearchTypeMapping.put("decimal", Double::valueOf);
+        mysqlTypeElasticsearchTypeMapping.put("year", String::valueOf);
     }
 
     public static final Pattern COMMA_LOGIC_PATTERN = Pattern.compile("\\s*[&|]+\\s*");

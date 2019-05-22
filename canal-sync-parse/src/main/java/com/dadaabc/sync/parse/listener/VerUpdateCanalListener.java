@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,11 @@ public class VerUpdateCanalListener extends VerAbstractCanalListener<VerUpdateCa
     private VerElasticsearchService verElasticsearchService;
 
     @Override
+    protected List<CanalEntry.Column> getColumns(CanalEntry.RowData rowData) {
+        return rowData.getAfterColumnsList();
+    }
+
+    @Override
     protected void doSync(VerDatabaseTableModel dbModel, VerIndexTypeModel esModel,
                           List<CanalEntry.Column> columns, CanalEntry.Column idColumn) {
         Map<String, Object> updateMap = new HashMap<>();
@@ -39,6 +45,9 @@ public class VerUpdateCanalListener extends VerAbstractCanalListener<VerUpdateCa
             }
             verElasticsearchService.updateList(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
                     dataMap, updateMap, dbModel.getListname(), dbModel.getMainKey());
+        } else if (MainTypeEnum.ONE_TO_ONE.getCode().equals(main) && dbModel.getAddition()) {
+            verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(),
+                    Collections.singletonMap(dbModel.getAdditionField(), dataMap));
         } else {
             verElasticsearchService.updateSet(esModel.getIndex(), esModel.getType(), idColumn.getValue(), dataMap);
         }

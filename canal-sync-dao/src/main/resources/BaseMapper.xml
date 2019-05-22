@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BaseMapper">
+    <!--veelur自定义-->
+    <select id="selectByPKWithPage" resultType="java.util.HashMap">
+        SELECT
+        *
+        FROM
+        ${databaseName}.${tableName}
+        WHERE
+        ${orderSign} <![CDATA[ >= ]]> #{begin}
+        AND
+        ${orderSign} <![CDATA[ < ]]> #{end}
+        <if test="null != pk">
+            AND ${pkStr} <![CDATA[ > ]]> #{pk}
+        </if>
+        order by ${pkStr} asc
+        limit #{start},#{limit}
+    </select>
+    <select id="selectByPKStr" resultType="java.util.HashMap">
+        SELECT
+        *
+        FROM
+        ${databaseName}.${tableName}
+        WHERE ${pkStr} in
+        <foreach collection="pkStrs" item="str" open="(" close=")" separator=",">
+            #{str}
+        </foreach>
+    </select>
+</mapper>

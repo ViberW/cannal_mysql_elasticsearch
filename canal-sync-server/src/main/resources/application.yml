@@ -3,19 +3,7 @@ spring:
   profiles:
     active: ${SERVER_ENVIROMENT:self}
   application:
-    name: data-mysql-es
-  http:
-    converters:
-      preferred-json-mapper: jackson
-    encoding:
-      enabled: true
-      charset: UTF-8
-    jackson:
-      date-format: yyyy-MM-dd HH:mm:ss
-      timeZone: GMT+08:00
-      default-property-inclusion: non_null
-    messages:
-      encoding: UTF-8
+    name: canal-mysql-elasticsearch
 # 服务端口号
 server:
   port: 8828

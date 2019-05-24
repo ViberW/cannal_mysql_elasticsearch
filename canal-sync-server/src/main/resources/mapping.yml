@@ -1,48 +1,49 @@
 ver:
   db-es:
     mappings:
-    - index: canal #索引index,默认以主表作为database作为index
-      type: canal #索引type,默认以主表表名作为type
-      dbs:
-      - database: database1  #数据库名
-        table: table1 #表名
-        include:  #包含字段,默认全部
-        exclude:         #不转换字段
-        pkstr: id      #作为索引的id的对应字段
-        main: 1          #表类型 1-主表 2-1对1表 3-1对n表
-        convert: {}  #需要转换的字段 字段name转换为names ,下面例子
-      - database: database1
-        table: table2
-        include: field1,field2,field3
-        exclude:
-        pkstr: id
-        main: 2
-        convert: {field1: FIELD1,field2: FIELD2}
-      - database: database1
-        table: table3
-        include:
-        exclude:
-        pkstr: sid
-        main: 3
-        listname: table3 #1对n时转化成list的名称
-        listkey: ID #对应主键 默认为表名称:id
-        convert: {}
-      - database: database1
-        table: table4
-        include: field1,field2
-        exclude: id
-        pkstr: s_id
-        main: 2
-        convert: {}
-      - database: database1
-        table: table5
-        include:
-        exclude:
-        pkstr: uid
-        attchstr: field_type=0  #附加判断属性,以@拼接,以逗号分割,例如字段类型为0代表用户,为1代表商家
-        #例如: field_type=0&!(user_type!=0|user_key=0)  field_type,且满足 非 (user_type不为0或user_key等于0)
-        #使用&|！()四个拼接关系.=和！=判断值 不支持！field可以使用！(expression) 不判断&和|的优先级,()会有优先级,从左向右判断
-        main: 3
-        listname: table5  #1对n时转化成list的名称
-        listkey: id #对应主键 默认为表名称:id
-        convert: {}
+      - index: canal #索引index,默认以主表作为database作为index
+        type: canal #索引type,默认以主表表名作为type
+        dbs:
+          - database: database1  #数据库名
+            table: table1 #表名
+            include:  #包含字段,默认全部
+            exclude:         #不转换字段
+            pkstr: id      #作为索引的id的对应字段
+            main: 1          #表类型 1-主表 2-1对1表 3-1对object表 4-1对n
+            convert: {}  #需要转换的字段 字段name转换为names ,下面例子
+          - database: database1
+            table: table2
+            include: field1,field2,field3
+            exclude:
+            pkstr: id
+            main: 2
+            convert: {field1: FIELD1,field2: FIELD2}
+          - database: database1
+            table: table3
+            include:
+            exclude:
+            pkstr: sid
+            main: 3
+            listname: table3 #1对n时转化成list的名称
+            listkey: ID #对应主键 默认为表名称:id
+            convert: {}
+          - database: database1
+            table: table4
+            include: field1,field2
+            exclude: id
+            pkstr: s_id
+            main: 2
+            convert: {}
+          - database: database1
+            table: table5
+            include:
+            exclude:
+            datasource:
+            pkstr: uid
+            attchstr: field_type=0  #附加判断属性,以@拼接,以逗号分割,例如字段类型为0代表用户,为1代表商家
+            #例如: field_type=0&!(user_type!=0|user_key=0)  field_type,且满足 非 (user_type不为0或user_key等于0)
+            #使用&|！()四个拼接关系.=和！=判断值 不支持！field可以使用！(expression) 不判断&和|的优先级,()会有优先级,从左向右判断
+            main: 3
+            listname: table5  #1对n时转化成list的名称
+            listkey: id #对应主键 默认为表名称:id
+            convert: {}

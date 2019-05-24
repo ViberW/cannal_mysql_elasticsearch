@@ -24,8 +24,8 @@ public class ElasticsearchClient implements DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
     private TransportClient transportClient;
 
-    @Value("${elasticsearch.cluster.name}")
-    private String clusterName;
+    /*@Value("${elasticsearch.cluster.name}")
+    private String clusterName;*/
     @Value("${elasticsearch.host}")
     private String host;
     @Value("${elasticsearch.port}")

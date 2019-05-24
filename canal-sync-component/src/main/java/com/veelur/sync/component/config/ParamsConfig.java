@@ -30,7 +30,7 @@ public class ParamsConfig implements ApplicationContextAware {
         return applicationContext.getBean(clazz);
     }
 
-    @Value(value = "classpath:mybatis/common/*.xml")
+    @Value(value = "classpath:mybatis/BaseMapper.xml")
     private Resource[] mapperLocations;
 
     @Value(value = "classpath:mybatis/mybatis-config.xml")

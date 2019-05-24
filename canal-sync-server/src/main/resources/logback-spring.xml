@@ -108,8 +108,6 @@
     <logger name="com.veelur.sync" additivity="true">
         <level value="INFO"/>
         <appender-ref ref="DEFAULT-APPENDER"/>
-        <appender-ref ref="ERROR-APPENDER"/>
-        <appender-ref ref="SENTRY"/>
     </logger>
     <logger name="com.alibaba" additivity="false">
         <level value="WARN"/>

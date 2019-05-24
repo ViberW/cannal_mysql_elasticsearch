@@ -20,7 +20,7 @@ canal:
       white-regex: database1\.(table1|table2)  #参考canal中filter.regex的配置说明,但需要注意此处并非正则,考虑到转义的翻译问题
       database:
         datasource: dadaabc
-        jdbc-url: 172.17.0.2:3306/database1  #此处后面使用的是默认的database名称
+        jdbc-url: 127.0.0.1:3306/database1  #此处后面使用的是默认的database名称
         username: username
         password: pwd
   zookeeper:
@@ -30,7 +30,7 @@ canal:
 
 # elasticsearch配置
 elasticsearch:
-  host: 192.168.133.249
+  host: 172.17.0.2
   port: 9300
   index:
     retry-conflict: 3

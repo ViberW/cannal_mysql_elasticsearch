@@ -24,58 +24,21 @@ server:
 #zookeeper配置(项目的zk实现主备方案也是使用该zk)
 canal:
   client:
-    - destination: elastic
+    - destination: destination1
       batchSize: 1000
       onOff: true
       model: elastic
       # 值得注意的是 这里白名单于canal里面的filter.regex 格式有点差别,少了个反斜杠
-      white-regex: dadaabc_test\.(student|student_extend|stu_contract|ts_vacate|tsr_task|subject|student_service|student_bind_schedule|student_bzr_change_log|teacher|teacher_extend)
+      white-regex: database1\.(table1|table2)  #参考canal中filter.regex的配置说明,但需要注意此处并非正则,考虑到转义的翻译问题
       database:
         datasource: dadaabc
-        jdbc-url: 192.168.170.24:3306/dadaabc_test
-        username: canal_repl
-        password: canal_repl
-    - destination: kafka
-      batch-size: 512 #需要考虑kafka的最大处理900k左右,不应该设置过大
-      onOff: true
-      model: kafka
-      white-regex: dadaabc_test\.(admin_user|admin_role|admin_department|admin_department_user|channel|union_user|union_category|region|order_info|stu_contract|refund|customer_retention|contract_templete|contract_templete_type|student|student_extend|student_bank_card|student_reward|student_invited|student_bind_schedule|student_bzr_change_log|student_service|service_log|student_money|student_money_extract|stu_contract_mail_log|student_follow_log|teacher_timetable|teacher_temp_schedule|teacher_schedule_new|teacher_schedule_temp_new|subject|exception_subject_new|exception_subject_replacement_log|course|course_category|book_type|course_pics|course_pics_mp3|picture_book_read_record|picture_book_collect|picture_book_dub_record|tea_job|teacher|teacher_extend|country_table|tea_contract|tea_contract_extend|teacher_complain|teacher_complain_item|teacher_sign_log|ts_vacate|tea_hook|teacher_lesson_absence|teacher_bind_change_log|tea_status_change_log|teacher_payment|admin_log|score_log|voice_score_record|sound_training)
-      database:
-        jdbc-url: 192.168.170.24:3306/dadaabc_test
-        username: canal_repl
-        password: canal_repl
-    - destination: dws
-      batch-size: 1000
-      onOff: true
-      model: elastic
-      white-regex: compensate_class\.(dws_vip_user_profile)
-      database:
-        datasource: dws
-        jdbc-url: 192.168.170.82:3306/compensate_class
-        username: root
-        password: mysqldev
-    - destination: kcrm
-      batch-size: 512
-      onOff: true
-      model: kafka
-      white-regex: dada_crm_test\.(lead|lead_log|quota_log|call_log|queue_log)
-      database:
-        jdbc-url: 192.168.170.24:3306/dada_crm_test
-        username: canal_repl
-        password: canal_repl
-    - destination: kcallcenter
-      batch-size: 512
-      onOff: true
-      model: kafka
-      white-regex: dada_call_center_test\.call_task
-      database:
-        jdbc-url: 192.168.170.24:3306/dada_call_center_test
-        username: canal_repl
-        password: canal_repl
+        jdbc-url: 172.17.0.2:3306/database1  #此处后面使用的是默认的database名称
+        username: username
+        password: pwd
   zookeeper:
     server: 172.17.0.2:2181
     sessionTime: 3000
-    path: /dadaabc/sync/elastic/work/running
+    path: /veelur/sync/elastic/work/running
 
 # elasticsearch配置
 elasticsearch:
@@ -91,12 +54,6 @@ elasticsearch:
 logging:
   path: ./logs
   register-shutdown-hook: false
-
-#数据同步开关
-data:
-  schame:
-    dadaabc: dadaabc_test
-    dws: compensate_class
 
 #线程执行
 thread:

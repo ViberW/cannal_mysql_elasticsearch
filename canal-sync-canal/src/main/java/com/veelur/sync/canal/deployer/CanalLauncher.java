@@ -58,6 +58,7 @@ public class CanalLauncher implements EnvironmentAware {
         });
     }
 
+    //todo 做成handler处理 解析下
     private String parseEnvironment(Environment env) {
         Map<String, InstanceMonitorModel> clients = new HashMap<>();
         Set<String> destinations = new HashSet<>();

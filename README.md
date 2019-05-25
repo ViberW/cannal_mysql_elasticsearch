@@ -14,8 +14,6 @@
 
 * wiki在编写中...
 
-* 在starcwang/canal_mysql_elasticsearch_sync [传送门](https://github.com/starcwang/canal_mysql_elasticsearch_sync)之上开发完成;
-
 * 测试情况： 4线程并发插入3张表,每张表2000数据量,三张表对应与同一个索引  
 最少耗时：148ms     
 最大耗时：1980ms  
